@@ -13,11 +13,11 @@ d3.select("#outcome-chart")
   .call(chart); // calls our chart, passing in selection
 
 // d3.select("#cluster-chart")
-//   .datum(data)  // bind data to selection
+//   .datum(series_cluster.map(function(d) { return d.series; }))  // bind data to selection
 //   .call(chart); // calls our chart, passing in selection
 
 // d3.select("#company-chart")
-//   .datum(data)  // bind data to selection
+//   .datum(series_company.map(function(d) { return d.series; }))  // bind data to selection
 //   .call(chart); // calls our chart, passing in selection
 
 // ================== CHART ==============================
@@ -26,46 +26,66 @@ function reg() {
   // BASICALLY: implement reusable components as closures with getter-setter methods
 
   var margin = {top: 20, right: 20, bottom: 20, left: 20},
-      width = 600,
-      height = 120,
+      width = 600 - margin.left - margin.right,
+      height = 400 - margin.top - margin.bottom,
       xValue = function(d) { return d[0]; }, // BEN: default x-accessor
       yValue = function(d) { return d[1]; }, // BEN: default y-accessor
-      xScale = d3.time.scale(),              // BEN: d3 time scale (knows how to format ticks)
-      yScale = d3.scale.linear(),
-      xAxis = d3.svg.axis().scale(xScale).orient("bottom").tickSize(6, 0),
-      area = d3.svg.area().x(X).y1(Y),       // BEN: path generator (area)
-      line = d3.svg.line().x(X).y(Y);        // BEN: path generator (line)
+      xScale = d3.scale.ordinal().rangeRoundBands([0, width], 0.5),
+      yScale = d3.scale.linear().rangeRound([height, 0]),
+      xAxis  = d3.svg.axis().scale(xScale)
+                            .ticks(10)
+                            .tickSubdivide(0) // don't show decimals
+                            .outerTickSize(0) // don't show outer ticks
+                            .orient("bottom"),
+      yAxis  = d3.svg.axis()
+                     .scale(yScale)
+                     .tickFormat(d3.format("d"))
+                     .tickSize(0)      // hide tick marks (we'll use grid lines instead)
+                     .tickPadding(6)   // leave some space near labels
+                     .tickSubdivide(0) // don't show decimals
+                     .outerTickSize(0) // don't show outer ticks
+                     .orient("left");
+      // area = d3.svg.area().x(X).y1(Y), // BEN: path generator (area)
+      // line = d3.svg.line().x(X).y(Y);  // BEN: path generator (line)
 
   function chart(selection) {
     selection.each(function(data) { // BEN: iterate over selection (d3 passes in data)
 
-      debugger;
-
       // Convert data to standard representation greedily;
       // this is needed for nondeterministic accessors.
-      data = data.map(function(d, i) {
-        return [xValue.call(data, d, i), yValue.call(data, d, i)];
+      data = data.map(function(s) {
+        return s.map(function(d, i) {
           // BEN: xValue / yValue reference accessors defined by client-code
           // BEN: "call()" sets "data" as "this"
+          return [xValue.call(s, d, i), yValue.call(s, d, i)]; 
+        });
       });
 
-      // Update the x-scale.
+      var data_flat = data.reduce(function(acc, d) { return acc.concat(d); }, []);
+
+      // Update the x-scale. // TODO: logic if years.length > 10
+      var xExt = d3.extent(data_flat, function(d) { return d[0]; }); // BEN: d3.extent gets max/min in array
       xScale
-          .domain(d3.extent(data, function(d) { return d[0]; })) // BEN: d3.extent gets max/min in array
-          .range([0, width - margin.left - margin.right]);
+          .domain(d3.range(xExt[0], xExt[1] + 1))
+          .rangeRoundBands([0, width], 0.5);
 
       // Update the y-scale.
-      yScale
-          .domain([0, d3.max(data, function(d) { return d[1]; })])
-          .range([height - margin.top - margin.bottom, 0]);
+      yScale               // TODO: logic to remove non-integers
+          .domain([0, d3.max(data_flat, function(d) { return d[1]; })])
+          .rangeRound([height, 0]);
+
+      // temporary: color scale
+      var color = d3.scale.linear()
+        .domain([0, data.length - 1])
+        .range(["#f00", "#00f"]); // BEN: notice linear color scale (even though discrete num layers)
+                                  //      i.e. yields values along line in 3-d RGB color space.
+
 
       // Select the svg element, if it exists.
-      var svg = d3.select(this).selectAll("svg").data([data]); // BEN: ???????
+      var svg = d3.select(this).selectAll("svg").data([data]); // BEN: see http://stackoverflow.com/questions/14665786/some-clarification-on-reusable-charts
 
       // Otherwise, create the skeletal chart.
       var gEnter = svg.enter().append("svg").append("g");
-      gEnter.append("path").attr("class", "area");
-      gEnter.append("path").attr("class", "line");
       gEnter.append("g").attr("class", "x axis");
 
       // Update the outer dimensions.
@@ -76,18 +96,36 @@ function reg() {
       var g = svg.select("g")
           .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-      // Update the area path.
-      g.select(".area")
-          .attr("d", area.y0(yScale.range()[0])); // BEN: area's y0 (baseline) constant
+      var layer = g.selectAll(".layer")
+        .data(function(d) { return d; })
+        .enter().append("g")     // TODO: is enter() appropriate here?
+        .attr("class", "layer")
+        .style("fill", function(d, i) { return color(i); });
 
-      // Update the line path.
-      g.select(".line")
-          .attr("d", line);
+      var rect = layer.selectAll("rect")
+        .data(function(d) { return d; })
+        .enter().append("rect")
+        .attr("x", function(d, i, j) { return X(d) + xScale.rangeBand() / data.length * j; })
+        //.attr("y", height)                // initial y is 0 (along x-axis)
+        .attr("y", function(d) { return Y(d); })
+        .attr("width", xScale.rangeBand() / data.length)     // initial width is size of band (i.e. "stacked", not "grouped")
+        //.attr("height", 0);               // initial height is 0
+        .attr("height", function(d) { return height - Y(d); });
 
-      // Update the x-axis.
-      g.select(".x.axis")
-          .attr("transform", "translate(0," + yScale.range()[0] + ")")
-          .call(xAxis);
+      // TODO set attributes
+
+      // // Update the area path.
+      // g.select(".area")
+      //     .attr("d", area.y0(yScale.range()[0])); // BEN: area's y0 (baseline) constant
+
+      // // Update the line path.
+      // g.select(".line")
+      //     .attr("d", line);
+
+      // // Update the x-axis.
+      // g.select(".x.axis")
+      //     .attr("transform", "translate(0," + yScale.range()[0] + ")")
+      //     .call(xAxis);
     });
   }
 
