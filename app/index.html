@@ -15,18 +15,66 @@
         <!-- endbuild -->
     </head>
     <body>
+
+        <style type="text/css" media="screen">
+            form {
+                position: absolute;
+                left: 530px;
+                top: 140px;
+            }
+
+            svg {
+                font-family: "Lucida Grande", "Lucida Sans Unicode", Verdana, Arial, Helvetica, sans-serif;
+                margin-top: 1em;
+            }
+
+            svg .chart-title {
+                font-size: 16px;
+                fill: #274b6d;
+            }
+
+            svg .x.axis .tick line {
+                fill: none;
+                stroke: #c0c0c0;
+                stroke-width: 1px;
+                shape-rendering: crispEdges;
+            }
+
+            svg .y.axis .tick line {
+                fill: none;
+                stroke: #c0c0c0;
+                stroke-width: 1px;
+                shape-rendering: crispEdges;
+            }
+
+            svg .axis path {
+                /* hide d3's axes - we'll use custom gridlines instead */
+                display: none;
+            }
+
+            svg .tick text {
+                fill: #666666;
+                font-size: 11px;
+                line-height: 14px;
+            }
+
+            svg .y.axis .axis-label {
+                fill: #4d759e;
+                font-size: 12px;
+                font-weight: bold;
+            }
+
+            svg .legend text {
+                fill: #274b6d;
+                font-size: 12px;
+                line-height: 14px;
+                cursor: pointer;
+            }
+        </style>
+
         <!--[if lt IE 10]>
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
-
-
-        <div class="hero-unit">
-          <h1>'Allo, 'Allo!</h1>
-          <p>You now have</p>
-          <ul>
-            <li>HTML5 Boilerplate</li>
-          </ul>
-        </div>
 
         <div id="outcome-chart" class="chart-registrations"></div>
         <div id="cluster-chart" class="chart-registrations"></div>

@@ -4,32 +4,34 @@ var series_outcomes = getSeries_outcomes();
 var series_cluster = getSeries_cluster();
 var series_company = getSeries_company();
 
-var chart = reg()
-              .x(function(d) { return d.x; }) // TODO: set x-accessor as required
-              .y(function(d) { return d.y; });// TODO: set y-accessor as required
+// var chart = reg();
+              // .x(function(d) { return d.x; }) // TODO: set x-accessor as required
+              // .y(function(d) { return d.y; });// TODO: set y-accessor as required
 
 d3.select("#outcome-chart")
   .datum(series_outcomes.map(function(d) { return d.series; }))  // bind data to selection
-  .call(chart); // calls our chart, passing in selection
+  .call(reg()); // calls our chart, passing in selection
 
 // d3.select("#cluster-chart")
 //   .datum(series_cluster.map(function(d) { return d.series; }))  // bind data to selection
-//   .call(chart); // calls our chart, passing in selection
+//   .call(reg()); // calls our chart, passing in selection
 
 // d3.select("#company-chart")
 //   .datum(series_company.map(function(d) { return d.series; }))  // bind data to selection
-//   .call(chart); // calls our chart, passing in selection
+//   .call(reg()); // calls our chart, passing in selection
 
 // ================== CHART ==============================
 function reg() {
   // see http://bost.ocks.org/mike/chart/
   // BASICALLY: implement reusable components as closures with getter-setter methods
 
-  var margin = {top: 20, right: 20, bottom: 20, left: 20},
+  var margin = {top: 40, right: 150, bottom: 30, left: 40},
       width = 600 - margin.left - margin.right,
       height = 400 - margin.top - margin.bottom,
-      xValue = function(d) { return d[0]; }, // BEN: default x-accessor
-      yValue = function(d) { return d[1]; }, // BEN: default y-accessor
+      // xValue = function(d) { return d[0]; }, // BEN: default x-accessor
+      // yValue = function(d) { return d[1]; }, // BEN: default y-accessor
+      xValue = function(d) { return d.x; }, // BEN: default x-accessor
+      yValue = function(d) { return d.y; }, // BEN: default y-accessor
       xScale = d3.scale.ordinal().rangeRoundBands([0, width], 0.5),
       yScale = d3.scale.linear().rangeRound([height, 0]),
       xAxis  = d3.svg.axis().scale(xScale)
@@ -39,14 +41,11 @@ function reg() {
                             .orient("bottom"),
       yAxis  = d3.svg.axis()
                      .scale(yScale)
+                     .orient("left")
                      .tickFormat(d3.format("d"))
-                     .tickSize(0)      // hide tick marks (we'll use grid lines instead)
+                     .tickSize(-width) // extend ticks out, so they become grid lines
                      .tickPadding(6)   // leave some space near labels
-                     .tickSubdivide(0) // don't show decimals
-                     .outerTickSize(0) // don't show outer ticks
-                     .orient("left");
-      // area = d3.svg.area().x(X).y1(Y), // BEN: path generator (area)
-      // line = d3.svg.line().x(X).y(Y);  // BEN: path generator (line)
+                     .tickSubdivide(0); // don't show decimals
 
   function chart(selection) {
     selection.each(function(data) { // BEN: iterate over selection (d3 passes in data)
@@ -55,31 +54,40 @@ function reg() {
       // this is needed for nondeterministic accessors.
       data = data.map(function(s) {
         return s.map(function(d, i) {
-          // BEN: xValue / yValue reference accessors defined by client-code
-          // BEN: "call()" sets "data" as "this"
           return [xValue.call(s, d, i), yValue.call(s, d, i)]; 
         });
       });
 
       var data_flat = data.reduce(function(acc, d) { return acc.concat(d); }, []);
 
-      // Update the x-scale. // TODO: logic if years.length > 10
-      var xExt = d3.extent(data_flat, function(d) { return d[0]; }); // BEN: d3.extent gets max/min in array
+      // Update the x-scale.
+      var xExt    = d3.extent(data_flat, function(d) { return d[0]; }); // BEN: d3.extent gets max/min in array
+      var xDomain = d3.range(xExt[0], xExt[1] + 1);
       xScale
-          .domain(d3.range(xExt[0], xExt[1] + 1))
+          .domain(xDomain)
           .rangeRoundBands([0, width], 0.5);
+      if (xDomain.length > 10) {
+        // Restrict number of x-axis ticks, to ensure that year labels do not overlap.
+        // In general, we only have space for approximately 10 labels
+        var divisor  = Math.ceil(xDomain.length / 10);
+        var startIdx = xDomain[0] % 5 ? (5 - xDomain[0] % 5) : 0; // first index whose val is a multiple of 5
+        var subset   = xDomain.filter(function(d, i) { return (i - startIdx) % divisor == 0; });
+        xAxis.tickValues(subset);
+        // Use less padding (otherwise bars will be too narrow)
+        xScale.rangeRoundBands([0, width], 0.1);
+      }
 
       // Update the y-scale.
-      yScale               // TODO: logic to remove non-integers
+      yScale
           .domain([0, d3.max(data_flat, function(d) { return d[1]; })])
           .rangeRound([height, 0]);
+      var yTicks = yScale.ticks().filter(function(d, i) { return d % 1 === 0; }); // remove non-integers
+      yAxis.tickValues(yTicks);
 
-      // temporary: color scale
+      // Temporary color scale.
       var color = d3.scale.linear()
         .domain([0, data.length - 1])
-        .range(["#f00", "#00f"]); // BEN: notice linear color scale (even though discrete num layers)
-                                  //      i.e. yields values along line in 3-d RGB color space.
-
+        .range(["#f00", "#00f"]);
 
       // Select the svg element, if it exists.
       var svg = d3.select(this).selectAll("svg").data([data]); // BEN: see http://stackoverflow.com/questions/14665786/some-clarification-on-reusable-charts
@@ -87,45 +95,40 @@ function reg() {
       // Otherwise, create the skeletal chart.
       var gEnter = svg.enter().append("svg").append("g");
       gEnter.append("g").attr("class", "x axis");
+      gEnter.append("g").attr("class", "y axis");
 
       // Update the outer dimensions.
-      svg .attr("width", width)
-          .attr("height", height);
+      svg .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom);
 
       // Update the inner dimensions.
       var g = svg.select("g")
           .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+      // Update the x-axis.
+      g.select(".x.axis")
+          .attr("transform", "translate(0," + yScale.range()[0] + ")")
+          .call(xAxis);
+
+      // Update the y-axis.
+      g.select(".y.axis")
+          .call(yAxis);
+
+      // Draw the bars.
       var layer = g.selectAll(".layer")
         .data(function(d) { return d; })
-        .enter().append("g")     // TODO: is enter() appropriate here?
+        .enter().append("g")     // TODO: is enter() appropriate here? How do we update/remove?
         .attr("class", "layer")
         .style("fill", function(d, i) { return color(i); });
 
       var rect = layer.selectAll("rect")
         .data(function(d) { return d; })
-        .enter().append("rect")
+        .enter().append("rect")  // TODO: is enter() appropriate here? How do we update/remove?
         .attr("x", function(d, i, j) { return X(d) + xScale.rangeBand() / data.length * j; })
-        //.attr("y", height)                // initial y is 0 (along x-axis)
         .attr("y", function(d) { return Y(d); })
-        .attr("width", xScale.rangeBand() / data.length)     // initial width is size of band (i.e. "stacked", not "grouped")
-        //.attr("height", 0);               // initial height is 0
+        .attr("width", xScale.rangeBand() / data.length)
         .attr("height", function(d) { return height - Y(d); });
 
-      // TODO set attributes
-
-      // // Update the area path.
-      // g.select(".area")
-      //     .attr("d", area.y0(yScale.range()[0])); // BEN: area's y0 (baseline) constant
-
-      // // Update the line path.
-      // g.select(".line")
-      //     .attr("d", line);
-
-      // // Update the x-axis.
-      // g.select(".x.axis")
-      //     .attr("transform", "translate(0," + yScale.range()[0] + ")")
-      //     .call(xAxis);
     });
   }
 
