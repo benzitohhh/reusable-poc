@@ -1,22 +1,46 @@
 // ================= CLIENT =============================
 fakeMissingGrantDates();
 var outcomes = getSeries_outcomes();
-var data_cluster = getSeries_cluster();
-var data_company = getSeries_company();
-
-var chart = reg().labels(outcomes.labels);
+var cluster = getSeries_cluster();
+var company = getSeries_company();
 
 d3.select("#outcome-chart")
   .datum(outcomes.series)  // bind data to selection
-  .call(chart); // calls our chart, passing in selection
+  .call(reg()
+    .labels(outcomes.labels)
+    .colors({1: "#f39c12"})
+    .title("Bose (Cluster #1): Registrations per Year, by Outcome")
+    .asStack(true)
+    .trans(true)
+  );
 
 // d3.select("#cluster-chart")
-//   .datum(series_cluster.map(function(d) { return d.series; }))  // bind data to selection
-//   .call(reg()); // calls our chart, passing in selection
+//   .datum(cluster.series)  // bind data to selection
+//   .call(reg()
+//     .labels(cluster.labels)
+//     .colors(["#000000", "#00FF00", "#FF6600", "#3399FF"])
+//     .title("Bose: Registrations per Year, by Cluster")
+//     .asStack(true)
+//     .trans(true)
+//   );
+
+// var myChart = reg()
+//                 .labels(company.labels)
+//                 .title("Bose & Peers: Registrations per Year, by Company")
+//                 .trans(true);
 
 // d3.select("#company-chart")
-//   .datum(series_company.map(function(d) { return d.series; }))  // bind data to selection
-//   .call(reg()); // calls our chart, passing in selection
+//   .datum(company.series)  // bind data to selection
+//   .call(myChart);
+
+// setInterval(function() {
+//     // Update (with new fake data)
+//     d3.select("#company-chart")
+//       .datum(getSeries_company().series)
+//       .call(myChart);
+//   }, 10000);
+
+
 
 
 
@@ -26,9 +50,14 @@ function reg() {
   // BASICALLY: implement reusable components as closures with getter-setter methods
 
   var margin = {top: 40, right: 150, bottom: 30, left: 40},
-      width = 600 - margin.left - margin.right,
+      width  = 600 - margin.left - margin.right,
       height = 400 - margin.top - margin.bottom,
       labels = [],
+      title  = "",
+      colors = [],
+      trans  = false,
+      asStack= false,
+      defCol = d3.scale.linear().range(["#00f", "#f00"]),
       xValue = function(d) { return d.x; }, // default x-accessor
       yValue = function(d) { return d.y; }, // default y-accessor
       xScale = d3.scale.ordinal().rangeRoundBands([0, width], 0.5),
@@ -47,7 +76,7 @@ function reg() {
                      .tickSubdivide(0); // don't show decimals
 
   function chart(selection) {
-    selection.each(function(data) { // BEN: iterate over selection (d3 passes in data)
+    selection.each(function(data) {
 
       // Convert data to standard representation greedily;
       // this is needed for nondeterministic accessors.
@@ -57,7 +86,13 @@ function reg() {
         });
       });
 
-      // TODO: if stack, add y0 baseline here...
+      if (asStack) {
+        // Stacked view, so add y0 (baseline)
+        var stack = d3.layout.stack()
+            .x(function(d) { return d[0]; })
+            .y(function(d) { return d[1]; });
+        data = stack(data);
+      }
 
       var data_flat = data.reduce(function(acc, d) { return acc.concat(d); }, []);
 
@@ -79,16 +114,15 @@ function reg() {
       }
 
       // Update the y-scale.
+      var maxY = d3.max(data_flat, function(d) { return asStack ? d.y0 + d.y : d[1]; }); 
       yScale
-          .domain([0, d3.max(data_flat, function(d) { return d[1]; })])
+          .domain([0, maxY])
           .rangeRound([height, 0]);
       var yTicks = yScale.ticks().filter(function(d, i) { return d % 1 === 0; }); // remove non-integers
       yAxis.tickValues(yTicks);
 
-      // Temporary color scale.
-      var color = d3.scale.linear()
-        .domain([0, data.length - 1])
-        .range(["#f00", "#00f"]);
+      // Update default color scale.
+      defCol.domain([0, data.length - 1]);
 
       // Select the svg element, if it exists.
       var svg = d3.select(this).selectAll("svg").data([data]); // BEN: see http://stackoverflow.com/questions/14665786/some-clarification-on-reusable-charts
@@ -98,7 +132,12 @@ function reg() {
       gEnter.append("g").attr("class", "x axis");
       gEnter.append("g").attr("class", "y axis");
       gEnter.append("g").attr("class", "legend");
-      
+      gEnter.append("text")
+        .attr("class", "chart-title")
+        .attr("x", (width / 2))             
+        .attr("y", 0 - (margin.top / 2))
+        .attr("text-anchor", "middle");
+
       // Update the outer dimensions.
       svg .attr("width", width + margin.left + margin.right)
           .attr("height", height + margin.top + margin.bottom);
@@ -116,10 +155,14 @@ function reg() {
       g.select(".y.axis")
           .call(yAxis);
 
-      // Update the legend.
+      // Update the title.
+      g.select(".chart-title")
+          .text(title);
+
+      // Set the legend.
       var legend = g.select(".legend").selectAll("g")
           .data(labels)
-        .enter().append("g")   // TODO: is enter() appropriate here? How do we update/remove?
+        .enter().append("g")
           .attr("class", "legend")
           .attr("transform", function(d, i) { return "translate(" + (margin.right) + "," + i * 20 + ")"; });
       
@@ -127,7 +170,7 @@ function reg() {
           .attr("x", width - 18)
           .attr("width", 18)
           .attr("height", 18)
-          .style("fill", function(d, i) { return color(i); });
+          .style("fill", C);
       
       legend.append("text")
           .attr("x", width - 24)
@@ -140,18 +183,60 @@ function reg() {
 
       // Draw the bars.
       var layer = g.selectAll(".layer")
-        .data(function(d) { return d; })
-        .enter().append("g")     // TODO: is enter() appropriate here? How do we update/remove?
+        .data(function(d) { return d; });
+
+      layer.enter().append("g")
         .attr("class", "layer")
-        .style("fill", function(d, i) { return color(i); });
+        .style("fill", C);
 
       var rect = layer.selectAll("rect")
-        .data(function(d) { return d; })
-        .enter().append("rect")  // TODO: is enter() appropriate here? How do we update/remove?
-        .attr("x", function(d, i, j) { return X(d) + xScale.rangeBand() / data.length * j; })
-        .attr("y", function(d) { return Y(d); })
-        .attr("width", xScale.rangeBand() / data.length)
-        .attr("height", function(d) { return height - Y(d); });
+        .data(function(d) { return d; });
+
+      var rectEnter = rect.enter().append("rect")
+        .attr("height", 0);
+
+      if (asStack) {
+        // stacked
+        rectEnter
+          .attr("x", function(d) { return X(d); })
+          .attr("y", function(d) { return yScale(d.y0); })
+          .attr("width", xScale.rangeBand())
+          .attr("height", 0);
+      } else {
+        // grouped
+        rectEnter
+          .attr("x", function(d, i, j) { return X(d) + xScale.rangeBand() / data.length * j; })
+          .attr("y", function(d) { return yScale(0); })
+          .attr("width", xScale.rangeBand() / data.length);
+      }
+
+      if (trans) {
+        rect = rect.transition().duration(500);
+      }
+
+      if (asStack) {
+        // stacked
+        if (trans) {
+          rect = rect.transition().duration(500)
+            .delay(function(d, i, j) { return j * 1000; });
+        }
+        rect
+          .attr("x", function(d) { return X(d); })
+          .attr("width", xScale.rangeBand())
+          .attr("y", function(d) { return yScale(d.y0 + d.y); })
+          .attr("height", function(d) { return yScale(d.y0) - yScale(d.y0 + d.y); });
+      } else {
+        // grouped
+        if (trans) {
+          rect = rect.transition().duration(500)
+            .delay(function(d, i, j) { return j * 1000; });
+        }
+        rect
+          .attr("x", function(d, i, j) { return X(d) + xScale.rangeBand() / data.length * j; })
+          .attr("y", function(d) { return Y(d); })
+          .attr("width", xScale.rangeBand() / data.length)
+          .attr("height", function(d) { return height - Y(d); });
+      }
 
     });
   }
@@ -164,6 +249,11 @@ function reg() {
   // y-accessor for drawing
   function Y(d) {
     return yScale(d[1]);
+  }
+
+    // color-accessor for drawing
+  function C(d, i) {
+    return colors[i] ? colors[i] : defCol(i);
   }
 
   chart.margin = function(_) {
@@ -199,6 +289,30 @@ function reg() {
   chart.labels = function(_) {
     if (!arguments.length) return labels;
     labels = _;
+    return chart;
+  };
+
+  chart.title = function(_) {
+    if (!arguments.length) return title;
+    title = _;
+    return chart;
+  };
+
+  chart.colors = function(_) {
+    if (!arguments.length) return colors;
+    colors = _;
+    return chart;
+  };
+
+  chart.trans = function(_) {
+    if (!arguments.length) return trans;
+    trans = _;
+    return chart;
+  };
+
+  chart.asStack = function(_) {
+    if (!arguments.length) return asStack;
+    asStack = _;
     return chart;
   };
 
@@ -282,7 +396,7 @@ function getSeries_cluster() {
       return p; 
     });
     pFams = pFams.filter(function(p) { return p != null; }); // remove nulls
-    var name = "Cluster #" + i;
+    var name = "Cluster #" + (i + 1);
     acc[name] = pFams;
     return acc;
   }, {});
@@ -305,13 +419,10 @@ function getSeries_cluster() {
 
   // Transform histograms to series
   var series = d3.keys(counts).map(function(cluster) {
-    return {
-      name:   cluster,
-      series: years.map(function(year) { return { x: year, y: counts[cluster][year] ? counts[cluster][year] : 0 }; })
-    }; 
+    return years.map(function(year) { return { x: year, y: counts[cluster][year] ? counts[cluster][year] : 0 }; }); 
   });
 
-  return series;
+  return { series: series, labels: d3.keys(clusters) };
 }
 
 /**
@@ -344,7 +455,10 @@ function getSeries_company() {
   var companies = {
     "Bose"            : bose_pFams,
     "Hiwave"          : hiwave_pFams,
-    "global Omnicorp" : getFakeData(bose_pFams),
+    "Global Omnicorp" : getFakeData(bose_pFams),
+    "Patently Obvious PLC" : getFakeData(bose_pFams),
+    "Kinda Big Deal inc." : getFakeData(bose_pFams),
+    "Holding Holdings" : getFakeData(bose_pFams),
     "Acme LLC"        : getFakeData(bose_pFams)
   };
 
@@ -366,13 +480,10 @@ function getSeries_company() {
 
   // Transform histograms to series
   var series = d3.keys(counts).map(function(company) {
-    return {
-      name: company,
-      series: years.map(function(year) { return { x: year, y: counts[company][year] ? counts[company][year] : 0}; })
-    };
+    return years.map(function(year) { return { x: year, y: counts[company][year] ? counts[company][year] : 0}; });
   });
 
-  return series;  
+  return { series: series, labels: d3.keys(companies) };  
 }
 
 
