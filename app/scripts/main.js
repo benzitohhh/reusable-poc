@@ -1,16 +1,14 @@
 // ================= CLIENT =============================
 fakeMissingGrantDates();
-var series_outcomes = getSeries_outcomes();
-var series_cluster = getSeries_cluster();
-var series_company = getSeries_company();
+var outcomes = getSeries_outcomes();
+var data_cluster = getSeries_cluster();
+var data_company = getSeries_company();
 
-// var chart = reg();
-              // .x(function(d) { return d.x; }) // TODO: set x-accessor as required
-              // .y(function(d) { return d.y; });// TODO: set y-accessor as required
+var chart = reg().labels(outcomes.labels);
 
 d3.select("#outcome-chart")
-  .datum(series_outcomes.map(function(d) { return d.series; }))  // bind data to selection
-  .call(reg()); // calls our chart, passing in selection
+  .datum(outcomes.series)  // bind data to selection
+  .call(chart); // calls our chart, passing in selection
 
 // d3.select("#cluster-chart")
 //   .datum(series_cluster.map(function(d) { return d.series; }))  // bind data to selection
@@ -20,6 +18,8 @@ d3.select("#outcome-chart")
 //   .datum(series_company.map(function(d) { return d.series; }))  // bind data to selection
 //   .call(reg()); // calls our chart, passing in selection
 
+
+
 // ================== CHART ==============================
 function reg() {
   // see http://bost.ocks.org/mike/chart/
@@ -28,10 +28,9 @@ function reg() {
   var margin = {top: 40, right: 150, bottom: 30, left: 40},
       width = 600 - margin.left - margin.right,
       height = 400 - margin.top - margin.bottom,
-      // xValue = function(d) { return d[0]; }, // BEN: default x-accessor
-      // yValue = function(d) { return d[1]; }, // BEN: default y-accessor
-      xValue = function(d) { return d.x; }, // BEN: default x-accessor
-      yValue = function(d) { return d.y; }, // BEN: default y-accessor
+      labels = [],
+      xValue = function(d) { return d.x; }, // default x-accessor
+      yValue = function(d) { return d.y; }, // default y-accessor
       xScale = d3.scale.ordinal().rangeRoundBands([0, width], 0.5),
       yScale = d3.scale.linear().rangeRound([height, 0]),
       xAxis  = d3.svg.axis().scale(xScale)
@@ -57,6 +56,8 @@ function reg() {
           return [xValue.call(s, d, i), yValue.call(s, d, i)]; 
         });
       });
+
+      // TODO: if stack, add y0 baseline here...
 
       var data_flat = data.reduce(function(acc, d) { return acc.concat(d); }, []);
 
@@ -96,7 +97,8 @@ function reg() {
       var gEnter = svg.enter().append("svg").append("g");
       gEnter.append("g").attr("class", "x axis");
       gEnter.append("g").attr("class", "y axis");
-
+      gEnter.append("g").attr("class", "legend");
+      
       // Update the outer dimensions.
       svg .attr("width", width + margin.left + margin.right)
           .attr("height", height + margin.top + margin.bottom);
@@ -113,6 +115,28 @@ function reg() {
       // Update the y-axis.
       g.select(".y.axis")
           .call(yAxis);
+
+      // Update the legend.
+      var legend = g.select(".legend").selectAll("g")
+          .data(labels)
+        .enter().append("g")   // TODO: is enter() appropriate here? How do we update/remove?
+          .attr("class", "legend")
+          .attr("transform", function(d, i) { return "translate(" + (margin.right) + "," + i * 20 + ")"; });
+      
+      legend.append("rect")
+          .attr("x", width - 18)
+          .attr("width", 18)
+          .attr("height", 18)
+          .style("fill", function(d, i) { return color(i); });
+      
+      legend.append("text")
+          .attr("x", width - 24)
+          .attr("y", 9)
+          .attr("dy", ".35em")
+          .style("text-anchor", "end")
+          .text(function(d) {
+            return d;
+          });
 
       // Draw the bars.
       var layer = g.selectAll(".layer")
@@ -132,12 +156,12 @@ function reg() {
     });
   }
 
-  // The x-accessor for the path generator; xScale ∘ xValue.
+  // x-accessor for drawing
   function X(d) {
     return xScale(d[0]);
   }
 
-  // The x-accessor for the path generator; yScale ∘ yValue.
+  // y-accessor for drawing
   function Y(d) {
     return yScale(d[1]);
   }
@@ -169,6 +193,12 @@ function reg() {
   chart.y = function(_) {
     if (!arguments.length) return yValue;
     yValue = _;
+    return chart;
+  };
+
+  chart.labels = function(_) {
+    if (!arguments.length) return labels;
+    labels = _;
     return chart;
   };
 
@@ -226,15 +256,18 @@ function getSeries_outcomes(){
   var yearsArr = d3.keys(yearsSet).sort();
   var years = d3.range(+yearsArr[0], +yearsArr[yearsArr.length - 1] + 1);
 
+  var labels = {
+    "priority_accepted": "accepted", 
+    "priority_pending":  "pending",
+    "priority_expired":  "expired"
+  };
+
   // Transform histograms to series
-  var series = ["priority_accepted", "priority_pending", "priority_expired"].map(function(s) {
-    return {
-      name: s,
-      series: years.map(function(year) { return {x: year, y: counts[s][year] ? counts[s][year] : 0 }; })
-    };
+  var series = d3.keys(labels).map(function(s) {
+    return years.map(function(year) { return {x: year, y: counts[s][year] ? counts[s][year] : 0 }; });
   });
   
-  return series;
+  return { series: series, labels: d3.values(labels) };
 }
 
 /**
