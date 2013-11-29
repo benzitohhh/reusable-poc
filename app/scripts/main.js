@@ -14,6 +14,7 @@ d3.select("#outcome-chart")
     .transition(true)
  );
 
+
 // d3.select("#cluster-chart")
 //   .datum(cluster.series)  // bind data to selection
 //   .call(reg()
@@ -27,7 +28,9 @@ d3.select("#outcome-chart")
 // var myChart = reg()
 //                 .labels(company.labels)
 //                 .title("Bose & Peers: Registrations per Year, by Company")
-//                 .trans(true);
+//                 .stacked(true)
+//                 .transition(true)
+// ;
 
 // d3.select("#company-chart")
 //   .datum(company.series)  // bind data to selecti 
@@ -180,7 +183,7 @@ function reg() {
 
       // Draw the bars.
       var layer = g.selectAll(".layer")
-        .data(function(d) { return d; });
+        .data(function(d) { return d; }); // bind data
 
       layer.enter().append("g")
         .attr("class", "layer")
@@ -189,10 +192,9 @@ function reg() {
       var rect = layer.selectAll("rect")
         .data(function(d) { return d; });
 
-      var rectEnter = rect.enter().append("rect")
-        .attr("height", 0);
+      var rectEnter = rect.enter().append("rect");
 
-      if (stacked) {
+      if (stacked /* TODO: or stream */) {
         // stacked
         rectEnter
           .attr("x", function(d) { return X(d); })
@@ -209,6 +211,7 @@ function reg() {
       }
 
       if (transition) {
+        // TODO: set initial state here
         rect = rect.transition().duration(500).delay(function(d, i, j) { return j * 1000; });
       }
 
