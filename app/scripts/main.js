@@ -6,13 +6,13 @@ var company = getSeries_company();
 
 d3.select("#outcome-chart")
   .datum(outcomes.series)  // bind data to selection
-  .call(reg()
+ .call(reg()
     .labels(outcomes.labels)
     .colors({1: "#f39c12"})
     .title("Bose (Cluster #1): Registrations per Year, by Outcome")
-    .asStack(true)
-    .trans(true)
-  );
+    .stacked(true)
+    .transition(true)
+ );
 
 // d3.select("#cluster-chart")
 //   .datum(cluster.series)  // bind data to selection
@@ -20,7 +20,7 @@ d3.select("#outcome-chart")
 //     .labels(cluster.labels)
 //     .colors(["#000000", "#00FF00", "#FF6600", "#3399FF"])
 //     .title("Bose: Registrations per Year, by Cluster")
-//     .asStack(true)
+//     .stacked(true)
 //     .trans(true)
 //   );
 
@@ -30,7 +30,7 @@ d3.select("#outcome-chart")
 //                 .trans(true);
 
 // d3.select("#company-chart")
-//   .datum(company.series)  // bind data to selection
+//   .datum(company.series)  // bind data to selecti 
 //   .call(myChart);
 
 // setInterval(function() {
@@ -38,10 +38,7 @@ d3.select("#outcome-chart")
 //     d3.select("#company-chart")
 //       .datum(getSeries_company().series)
 //       .call(myChart);
-//   }, 10000);
-
-
-
+//     }, 10000);
 
 
 // ================== CHART ==============================
@@ -49,31 +46,31 @@ function reg() {
   // see http://bost.ocks.org/mike/chart/
   // BASICALLY: implement reusable components as closures with getter-setter methods
 
-  var margin = {top: 40, right: 150, bottom: 30, left: 40},
-      width  = 600 - margin.left - margin.right,
-      height = 400 - margin.top - margin.bottom,
-      labels = [],
-      title  = "",
-      colors = [],
-      trans  = false,
-      asStack= false,
-      defCol = d3.scale.linear().range(["#00f", "#f00"]),
-      xValue = function(d) { return d.x; }, // default x-accessor
-      yValue = function(d) { return d.y; }, // default y-accessor
-      xScale = d3.scale.ordinal().rangeRoundBands([0, width], 0.5),
-      yScale = d3.scale.linear().rangeRound([height, 0]),
-      xAxis  = d3.svg.axis().scale(xScale)
-                            .ticks(10)
-                            .tickSubdivide(0) // don't show decimals
-                            .outerTickSize(0) // don't show outer ticks
-                            .orient("bottom"),
-      yAxis  = d3.svg.axis()
-                     .scale(yScale)
-                     .orient("left")
-                     .tickFormat(d3.format("d"))
-                     .tickSize(-width) // extend ticks out, so they become grid lines
-                     .tickPadding(6)   // leave some space near labels
-                     .tickSubdivide(0); // don't show decimals
+  var margin      = {top: 40, right: 150, bottom: 30, left: 40},
+      width       = 600 - margin.left - margin.right,
+      height      = 400 - margin.top - margin.bottom,
+      labels      = [],
+      title       = "",
+      colors      = [],
+      transition  = false,
+      stacked     = false,
+      defCol      = d3.scale.linear().range(["#00f", "#f00"]),
+      xValue      = function(d) { return d.x; }, // default x-accessor
+      yValue      = function(d) { return d.y; }, // default y-accessor
+      xScale      = d3.scale.ordinal().rangeRoundBands([0, width], 0.5),
+      yScale      = d3.scale.linear().rangeRound([height, 0]),
+      xAxis       = d3.svg.axis().scale(xScale)
+                                 .ticks(10)
+                                 .tickSubdivide(0) // don't show decimals
+                                 .outerTickSize(0) // don't show outer ticks
+                                 .orient("bottom"),
+      yAxis       = d3.svg.axis()
+                          .scale(yScale)
+                          .orient("left")
+                          .tickFormat(d3.format("d"))
+                          .tickSize(-width) // extend ticks out, so they become grid lines
+                          .tickPadding(6)   // leave some space near labels
+                          .tickSubdivide(0); // don't show decimals
 
   function chart(selection) {
     selection.each(function(data) {
@@ -86,7 +83,7 @@ function reg() {
         });
       });
 
-      if (asStack) {
+      if (stacked) {
         // Stacked view, so add y0 (baseline)
         var stack = d3.layout.stack()
             .x(function(d) { return d[0]; })
@@ -114,7 +111,7 @@ function reg() {
       }
 
       // Update the y-scale.
-      var maxY = d3.max(data_flat, function(d) { return asStack ? d.y0 + d.y : d[1]; }); 
+      var maxY = d3.max(data_flat, function(d) { return stacked ? d.y0 + d.y : d[1]; }); 
       yScale
           .domain([0, maxY])
           .rangeRound([height, 0]);
@@ -195,11 +192,11 @@ function reg() {
       var rectEnter = rect.enter().append("rect")
         .attr("height", 0);
 
-      if (asStack) {
+      if (stacked) {
         // stacked
         rectEnter
           .attr("x", function(d) { return X(d); })
-          .attr("y", function(d) { return yScale(d.y0); })
+          .attr("y", function(d) { return Y0(d); })
           .attr("width", xScale.rangeBand())
           .attr("height", 0);
       } else {
@@ -207,30 +204,23 @@ function reg() {
         rectEnter
           .attr("x", function(d, i, j) { return X(d) + xScale.rangeBand() / data.length * j; })
           .attr("y", function(d) { return yScale(0); })
-          .attr("width", xScale.rangeBand() / data.length);
+          .attr("width", xScale.rangeBand() / data.length)
+          .attr("height", 0);
       }
 
-      if (trans) {
-        rect = rect.transition().duration(500);
+      if (transition) {
+        rect = rect.transition().duration(500).delay(function(d, i, j) { return j * 1000; });
       }
 
-      if (asStack) {
+      if (stacked) {
         // stacked
-        if (trans) {
-          rect = rect.transition().duration(500)
-            .delay(function(d, i, j) { return j * 1000; });
-        }
         rect
           .attr("x", function(d) { return X(d); })
+          .attr("y", function(d) { return Y1(d); })
           .attr("width", xScale.rangeBand())
-          .attr("y", function(d) { return yScale(d.y0 + d.y); })
           .attr("height", function(d) { return yScale(d.y0) - yScale(d.y0 + d.y); });
       } else {
         // grouped
-        if (trans) {
-          rect = rect.transition().duration(500)
-            .delay(function(d, i, j) { return j * 1000; });
-        }
         rect
           .attr("x", function(d, i, j) { return X(d) + xScale.rangeBand() / data.length * j; })
           .attr("y", function(d) { return Y(d); })
@@ -251,9 +241,19 @@ function reg() {
     return yScale(d[1]);
   }
 
-    // color-accessor for drawing
+  // y0-accessor for drawing (stack - layer base)
+  function Y0(d) {
+    return yScale(d.y0);
+  }
+
+  // y1-accessor for drawing (stack - layer top)
+  function Y1(d) {
+    return yScale(d.y0 + d.y);
+  }
+
+  // color-accessor for drawing
   function C(d, i) {
-    return colors[i] ? colors[i] : defCol(i);
+    return colors[i] ? colors[i] : defCol(i); // if user-defined color exists use it, otherwise default
   }
 
   chart.margin = function(_) {
@@ -304,15 +304,15 @@ function reg() {
     return chart;
   };
 
-  chart.trans = function(_) {
-    if (!arguments.length) return trans;
-    trans = _;
+  chart.transition = function(_) {
+    if (!arguments.length) return transition;
+    transition = _;
     return chart;
   };
 
-  chart.asStack = function(_) {
-    if (!arguments.length) return asStack;
-    asStack = _;
+  chart.stacked = function(_) {
+    if (!arguments.length) return stacked;
+    stacked = _;
     return chart;
   };
 
