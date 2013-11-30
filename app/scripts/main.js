@@ -4,6 +4,48 @@ var outcomes = getSeries_outcomes();
 var cluster = getSeries_cluster();
 var company = getSeries_company();
 
+var render = {
+  enter:  function(selection, chart) {
+    var rectEnter = selection.enter().append("rect");
+    if (chart.stacked()) {
+      // stacked
+      rectEnter
+        .attr("x", function(d) { return chart.X(d); })
+        .attr("y", function(d) { return chart.Y0(d); })
+        .attr("width", xScale.rangeBand())
+        .attr("height", 0);
+    } else {
+      // grouped
+      rectEnter
+        .attr("x", function(d, i, j) { return chart.X(d) + xScale.rangeBand() / data.length * j; })
+        .attr("y", function(d) { return yScale(0); })
+        .attr("width", xScale.rangeBand() / data.length)
+        .attr("height", 0);
+    }
+  },
+  update: function(selection, chart) {
+    if (chart.transition()) {
+      // TODO: set initial state here
+      selection = selection.transition().duration(500).delay(function(d, i, j) { return j * 1000; });
+    }
+    if (chart.stacked()) {
+      // stacked
+      selection
+        .attr("x", function(d) { return chart.X(d); })
+        .attr("y", function(d) { return chart.Y1(d); })
+        .attr("width", xScale.rangeBand())
+        .attr("height", function(d) { return yScale(d.y0) - yScale(d.y0 + d.y); });
+    } else {
+      // grouped
+      selection
+        .attr("x", function(d, i, j) { return chart.X(d) + xScale.rangeBand() / data.length * j; })
+        .attr("y", function(d) { return chart.Y(d); })
+        .attr("width", xScale.rangeBand() / data.length)
+        .attr("height", function(d) { return height - chart.Y(d); });
+    }
+  }
+};
+
 d3.select("#outcome-chart")
   .datum(outcomes.series)  // bind data to selection
  .call(reg()
@@ -12,7 +54,7 @@ d3.select("#outcome-chart")
     .title("Bose (Cluster #1): Registrations per Year, by Outcome")
     .stacked(true)
     .transition(true)
-    //.render(function(chart) { console.log("brap: " + chart.transition()); })
+    .render(render)
  );
 
 
@@ -75,47 +117,7 @@ function reg() {
                           .tickSize(-width) // extend ticks out, so they become grid lines
                           .tickPadding(6)   // leave some space near labels
                           .tickSubdivide(0), // don't show decimals
-      render      = {
-        enter:  function(selection, chart) {
-          var rectEnter = selection.enter().append("rect");
-          if (stacked) {
-            // stacked
-            rectEnter
-              .attr("x", function(d) { return chart.X(d); })
-              .attr("y", function(d) { return chart.Y0(d); })
-              .attr("width", xScale.rangeBand())
-              .attr("height", 0);
-          } else {
-            // grouped
-            rectEnter
-              .attr("x", function(d, i, j) { return chart.X(d) + xScale.rangeBand() / data.length * j; })
-              .attr("y", function(d) { return yScale(0); })
-              .attr("width", xScale.rangeBand() / data.length)
-              .attr("height", 0);
-          }
-        },
-        update: function(selection, chart) {
-          if (transition) {
-            // TODO: set initial state here
-            selection = selection.transition().duration(500).delay(function(d, i, j) { return j * 1000; });
-          }
-          if (stacked) {
-            // stacked
-            selection
-              .attr("x", function(d) { return chart.X(d); })
-              .attr("y", function(d) { return chart.Y1(d); })
-              .attr("width", xScale.rangeBand())
-              .attr("height", function(d) { return yScale(d.y0) - yScale(d.y0 + d.y); });
-          } else {
-            // grouped
-            selection
-              .attr("x", function(d, i, j) { return chart.X(d) + xScale.rangeBand() / data.length * j; })
-              .attr("y", function(d) { return chart.Y(d); })
-              .attr("width", xScale.rangeBand() / data.length)
-              .attr("height", function(d) { return height - chart.Y(d); });
-          }
-        }
-      };
+      render      = {};
 
   function chart(selection) {
     selection.each(function(data) {
@@ -241,27 +243,27 @@ function reg() {
   }
 
   // x-accessor for drawing
-  chart.X = function(d) {
+  function X(d) {
     return xScale(d[0]);
   };
 
   // y-accessor for drawing
-  chart.Y = function(d) {
+  function Y(d) {
     return yScale(d[1]);
   };
 
   // y0-accessor for drawing (stack - layer base)
-  chart.Y0 = function(d) {
+  function Y0(d) {
     return yScale(d.y0);
   };
 
   // y1-accessor for drawing (stack - layer top)
-  chart.Y1 = function(d) {
+  function Y1(d) {
     return yScale(d.y0 + d.y);
   };
 
   // color-accessor for drawing
-  chart.C = function(d, i) {
+  function C(d, i) {
     return colors[i] ? colors[i] : defCol(i); // if user-defined color exists use it, otherwise default
   };
 
