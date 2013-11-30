@@ -180,48 +180,6 @@ function fakeMissingGrantDates(){
 
 
 // ================== CHART ==============================
-var columnRndr = {
-  enter:  function(selection, chart, data) {
-    var rectEnter = selection.enter().append("rect");
-    if (chart.stacked()) {
-      // stacked
-      rectEnter
-        .attr("x", function(d) { return chart.X(d); })
-        .attr("y", function(d) { return chart.Y0(d); })
-        .attr("width", chart.xScale.rangeBand())
-        .attr("height", 0);
-    } else {
-      // grouped
-      rectEnter
-        .attr("x", function(d, i, j) { return chart.X(d) + chart.xScale.rangeBand() / data.length * j; })
-        .attr("y", function(d) { return chart.yScale(0); })
-        .attr("width", chart.xScale.rangeBand() / data.length)
-        .attr("height", 0);
-    }
-  },
-  update: function(selection, chart, data) {
-    if (chart.transition()) {
-      // TODO: set initial state here
-      selection = selection.transition().duration(500).delay(function(d, i, j) { return j * 1000; });
-    }
-    if (chart.stacked()) {
-      // stacked
-      selection
-        .attr("x", function(d) { return chart.X(d); })
-        .attr("y", function(d) { return chart.Y1(d); })
-        .attr("width", chart.xScale.rangeBand())
-        .attr("height", function(d) { return chart.yScale(d.y0) - chart.yScale(d.y0 + d.y); });
-    } else {
-      // grouped
-      selection
-        .attr("x", function(d, i, j) { return chart.X(d) + chart.xScale.rangeBand() / data.length * j; })
-        .attr("y", function(d) { return chart.Y(d); })
-        .attr("width", chart.xScale.rangeBand() / data.length)
-        .attr("height", function(d) { return chart.height() - chart.Y(d); });
-    }
-  }
-};
-
 function baseChart() {
   // see http://bost.ocks.org/mike/chart/
   // BASICALLY: implement reusable components as closures with getter-setter methods
@@ -478,9 +436,52 @@ function baseChart() {
   return chart;
 }
 
+var columnRndr = {
+  enter:  function(selection, chart, data) {
+    var rectEnter = selection.enter().append("rect");
+    if (chart.stacked()) {
+      // stacked
+      rectEnter
+        .attr("x", function(d) { return chart.X(d); })
+        .attr("y", function(d) { return chart.Y0(d); })
+        .attr("width", chart.xScale.rangeBand())
+        .attr("height", 0);
+    } else {
+      // grouped
+      rectEnter
+        .attr("x", function(d, i, j) { return chart.X(d) + chart.xScale.rangeBand() / data.length * j; })
+        .attr("y", function(d) { return chart.yScale(0); })
+        .attr("width", chart.xScale.rangeBand() / data.length)
+        .attr("height", 0);
+    }
+  },
+  update: function(selection, chart, data) {
+    if (chart.transition()) {
+      // TODO: set initial state here
+      selection = selection.transition().duration(500).delay(function(d, i, j) { return j * 1000; });
+    }
+    if (chart.stacked()) {
+      // stacked
+      selection
+        .attr("x", function(d) { return chart.X(d); })
+        .attr("y", function(d) { return chart.Y1(d); })
+        .attr("width", chart.xScale.rangeBand())
+        .attr("height", function(d) { return chart.yScale(d.y0) - chart.yScale(d.y0 + d.y); });
+    } else {
+      // grouped
+      selection
+        .attr("x", function(d, i, j) { return chart.X(d) + chart.xScale.rangeBand() / data.length * j; })
+        .attr("y", function(d) { return chart.Y(d); })
+        .attr("width", chart.xScale.rangeBand() / data.length)
+        .attr("height", function(d) { return chart.height() - chart.Y(d); });
+    }
+  }
+};
+
 function regChart() {
   return baseChart().render(columnRndr);
 }
+
 
 // ================= CLIENT =============================
 fakeMissingGrantDates();
