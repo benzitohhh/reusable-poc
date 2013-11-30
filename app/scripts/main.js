@@ -12,6 +12,7 @@ d3.select("#outcome-chart")
     .title("Bose (Cluster #1): Registrations per Year, by Outcome")
     .stacked(true)
     .transition(true)
+    //.render(function(chart) { console.log("brap: " + chart.transition()); })
  );
 
 
@@ -73,7 +74,48 @@ function reg() {
                           .tickFormat(d3.format("d"))
                           .tickSize(-width) // extend ticks out, so they become grid lines
                           .tickPadding(6)   // leave some space near labels
-                          .tickSubdivide(0); // don't show decimals
+                          .tickSubdivide(0), // don't show decimals
+      render      = {
+        enter:  function(selection, chart) {
+          var rectEnter = selection.enter().append("rect");
+          if (stacked) {
+            // stacked
+            rectEnter
+              .attr("x", function(d) { return chart.X(d); })
+              .attr("y", function(d) { return chart.Y0(d); })
+              .attr("width", xScale.rangeBand())
+              .attr("height", 0);
+          } else {
+            // grouped
+            rectEnter
+              .attr("x", function(d, i, j) { return chart.X(d) + xScale.rangeBand() / data.length * j; })
+              .attr("y", function(d) { return yScale(0); })
+              .attr("width", xScale.rangeBand() / data.length)
+              .attr("height", 0);
+          }
+        },
+        update: function(selection, chart) {
+          if (transition) {
+            // TODO: set initial state here
+            selection = selection.transition().duration(500).delay(function(d, i, j) { return j * 1000; });
+          }
+          if (stacked) {
+            // stacked
+            selection
+              .attr("x", function(d) { return chart.X(d); })
+              .attr("y", function(d) { return chart.Y1(d); })
+              .attr("width", xScale.rangeBand())
+              .attr("height", function(d) { return yScale(d.y0) - yScale(d.y0 + d.y); });
+          } else {
+            // grouped
+            selection
+              .attr("x", function(d, i, j) { return chart.X(d) + xScale.rangeBand() / data.length * j; })
+              .attr("y", function(d) { return chart.Y(d); })
+              .attr("width", xScale.rangeBand() / data.length)
+              .attr("height", function(d) { return height - chart.Y(d); });
+          }
+        }
+      };
 
   function chart(selection) {
     selection.each(function(data) {
@@ -170,7 +212,7 @@ function reg() {
           .attr("x", width - 18)
           .attr("width", 18)
           .attr("height", 18)
-          .style("fill", C);
+          .style("fill", chart.C);
       
       legend.append("text")
           .attr("x", width - 24)
@@ -187,77 +229,41 @@ function reg() {
 
       layer.enter().append("g")
         .attr("class", "layer")
-        .style("fill", C);
+        .style("fill", chart.C);
 
       var rect = layer.selectAll("rect")
         .data(function(d) { return d; });
 
-      var rectEnter = rect.enter().append("rect");
-
-      if (stacked /* TODO: or stream */) {
-        // stacked
-        rectEnter
-          .attr("x", function(d) { return X(d); })
-          .attr("y", function(d) { return Y0(d); })
-          .attr("width", xScale.rangeBand())
-          .attr("height", 0);
-      } else {
-        // grouped
-        rectEnter
-          .attr("x", function(d, i, j) { return X(d) + xScale.rangeBand() / data.length * j; })
-          .attr("y", function(d) { return yScale(0); })
-          .attr("width", xScale.rangeBand() / data.length)
-          .attr("height", 0);
-      }
-
-      if (transition) {
-        // TODO: set initial state here
-        rect = rect.transition().duration(500).delay(function(d, i, j) { return j * 1000; });
-      }
-
-      if (stacked) {
-        // stacked
-        rect
-          .attr("x", function(d) { return X(d); })
-          .attr("y", function(d) { return Y1(d); })
-          .attr("width", xScale.rangeBand())
-          .attr("height", function(d) { return yScale(d.y0) - yScale(d.y0 + d.y); });
-      } else {
-        // grouped
-        rect
-          .attr("x", function(d, i, j) { return X(d) + xScale.rangeBand() / data.length * j; })
-          .attr("y", function(d) { return Y(d); })
-          .attr("width", xScale.rangeBand() / data.length)
-          .attr("height", function(d) { return height - Y(d); });
-      }
+      render.enter(rect, chart);
+      render.update(rect, chart);
 
     });
   }
 
   // x-accessor for drawing
-  function X(d) {
+  chart.X = function(d) {
     return xScale(d[0]);
-  }
+  };
 
   // y-accessor for drawing
-  function Y(d) {
+  chart.Y = function(d) {
     return yScale(d[1]);
-  }
+  };
 
   // y0-accessor for drawing (stack - layer base)
-  function Y0(d) {
+  chart.Y0 = function(d) {
     return yScale(d.y0);
-  }
+  };
 
   // y1-accessor for drawing (stack - layer top)
-  function Y1(d) {
+  chart.Y1 = function(d) {
     return yScale(d.y0 + d.y);
-  }
+  };
 
   // color-accessor for drawing
-  function C(d, i) {
+  chart.C = function(d, i) {
     return colors[i] ? colors[i] : defCol(i); // if user-defined color exists use it, otherwise default
-  }
+  };
 
   chart.margin = function(_) {
     if (!arguments.length) return margin;
@@ -316,6 +322,12 @@ function reg() {
   chart.stacked = function(_) {
     if (!arguments.length) return stacked;
     stacked = _;
+    return chart;
+  };
+
+  chart.render = function(_) {
+    if (!arguments.length) return render;
+    render = _;
     return chart;
   };
 
