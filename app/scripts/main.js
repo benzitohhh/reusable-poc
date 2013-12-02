@@ -210,6 +210,9 @@ function baseChart() {
                           .tickSize(-width) // extend ticks out, so they become grid lines
                           .tickPadding(6)   // leave some space near labels
                           .tickSubdivide(0), // don't show decimals
+      stack       = d3.layout.stack()
+                             .x(function(d) { return d[0]; })
+                             .y(function(d) { return d[1]; }),
       render      = { enter: function() {}, update: function() {} };
 
   function chart(selection) {
@@ -224,11 +227,7 @@ function baseChart() {
       });
 
       if (stacked) {        
-        // Add y0 (baseline)
-        var stack = d3.layout.stack()
-            .x(function(d) { return d[0]; })
-            .y(function(d) { return d[1]; });
-        data = stack(data);
+        data = stack(data); // Add y0 (baseline)
       }
 
       // Flat data (useful for finding max/min)
@@ -260,16 +259,12 @@ function baseChart() {
       yAxis.tickValues(yTicks);
 
       if (stacked) {
-        // Now that axes and scales have been set,
-        // recalculate stack, excluding hidden series
+        // Now that axes and scales have been set (including min/max stack values),
+        // recalculate stack excluding hidden series
         var sData = data.map(function(s, i) {
           return !hide[i] ? s : s.map(function(d) { return [d[0], 0]; });  // hidden series get y = 0
         });
-        // Add y0 (baseline)
-        var stack = d3.layout.stack()
-            .x(function(d) { return d[0]; })
-            .y(function(d) { return d[1]; });
-        data = stack(sData);
+        data = stack(sData); // Add y0 (baseline)
       }
 
       // Update default color scale.
@@ -312,7 +307,14 @@ function baseChart() {
 
       // Legend: Bind data
       var lgnds = g.select(".legend").selectAll(".legend-element")
-        .data(labels); // UPDATE
+        .data(labels);
+
+      // Legend: update labels (i.e. to denote show/hide series)
+      lgnds.select("rect")
+          .style("fill", function(d, i) {
+            var myCol = hide[i] ? "#ffffff" : C(d, i);
+            return myCol;
+          });
 
       // Legend: append labels (if they do not already exist)
       var lgnds_enter = lgnds.enter().append("g")
@@ -337,13 +339,7 @@ function baseChart() {
         chart.hide()[i] = !chart.hide()[i];
         chart(selection);
       });
-
-      lgnds.select("rect")
-          .style("fill", function(d, i) {
-            var myCol = hide[i] ? "#ffffff" : C(d, i);
-            return myCol;
-          });
-
+      
       // Draw the bars.
       var layer = g.selectAll(".layer")
         .data(function(d) { return d; }); // bind data
@@ -357,7 +353,6 @@ function baseChart() {
 
       render.enter(rect, chart, data);
       render.update(rect, chart, data);
-
     });
   }
 
@@ -490,20 +485,18 @@ var columnRndr = {
   },
   update: function(selection, chart, data) {
     if (chart.transition()) {
-      //Exclude hidden series indecies
-      var idxExclHidden = [];
-      var j = 0;
-      data.forEach(function(d, i) {
-        idxExclHidden.push(chart.hide()[i] ? 0 : j++); // hidden get index 0
-      });
-
       if (selection.enter()[0][0] == undefined) {
-        selection = selection.transition().duration(500);
+        // Bars are already on-screen, so show fast transition.
+        selection = selection.transition().duration(200);
       } else {
+        // Bars are not yet on-screen, so show slower transition, with each series delayed individually.
+        var idxExclHidden = [];
+        var j = 0;
+        data.forEach(function(d, i) {
+          idxExclHidden.push(chart.hide()[i] ? 0 : j++); // hidden series excluded from delay (i.e. get index 0).
+        });
         selection = selection.transition().duration(500).delay(function(d, i, j) { return idxExclHidden[j] * 500; });
       }
-        
-
     }
     if (chart.stacked()) {
       // stacked
@@ -520,7 +513,6 @@ var columnRndr = {
         .attr("width", chart.xScale.rangeBand() / data.length)
         .attr("height", function(d, i, j) { 
             return chart.hide()[j] ? 0 : chart.height() - chart.Y(d);
-
         });
     }
   }
