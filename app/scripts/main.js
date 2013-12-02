@@ -189,9 +189,10 @@ function baseChart() {
       height      = 400 - margin.top - margin.bottom,
       labels      = [],
       title       = "",
-      colors      = [],
+      hide        = {/*0: true, 1: true, 2: true*/},
       transition  = false,
       stacked     = false,
+      colors      = [],
       defCol      = d3.scale.linear().range(["#00f", "#f00"]),
       xValue      = function(d) { return d.x; }, // default x-accessor
       yValue      = function(d) { return d.y; }, // default y-accessor
@@ -222,14 +223,15 @@ function baseChart() {
         });
       });
 
-      if (stacked) {
-        // Stacked view, so add y0 (baseline)
+      if (stacked) {        
+        // Add y0 (baseline)
         var stack = d3.layout.stack()
             .x(function(d) { return d[0]; })
             .y(function(d) { return d[1]; });
         data = stack(data);
       }
 
+      // Flat data (useful for finding max/min)
       var data_flat = data.reduce(function(acc, d) { return acc.concat(d); }, []);
 
       // Update the x-scale.
@@ -257,6 +259,19 @@ function baseChart() {
       var yTicks = yScale.ticks().filter(function(d, i) { return d % 1 === 0; }); // remove non-integers
       yAxis.tickValues(yTicks);
 
+      if (stacked) {
+        // Now that axes and scales have been set,
+        // recalculate stack, excluding hidden series
+        var sData = data.map(function(s, i) {
+          return !hide[i] ? s : s.map(function(d) { return [d[0], 0]; });  // hidden series get y = 0
+        });
+        // Add y0 (baseline)
+        var stack = d3.layout.stack()
+            .x(function(d) { return d[0]; })
+            .y(function(d) { return d[1]; });
+        data = stack(sData);
+      }
+
       // Update default color scale.
       defCol.domain([0, data.length - 1]);
 
@@ -276,45 +291,57 @@ function baseChart() {
 
       // Update the outer dimensions.
       svg .attr("width", width + margin.left + margin.right)
-          .attr("height", height + margin.top + margin.bottom);
+        .attr("height", height + margin.top + margin.bottom);
 
       // Update the inner dimensions.
       var g = svg.select("g")
-          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
       // Update the x-axis.
       g.select(".x.axis")
-          .attr("transform", "translate(0," + yScale.range()[0] + ")")
-          .call(xAxis);
+        .attr("transform", "translate(0," + yScale.range()[0] + ")")
+        .call(xAxis);
 
       // Update the y-axis.
       g.select(".y.axis")
-          .call(yAxis);
+        .call(yAxis);
 
       // Update the title.
       g.select(".chart-title")
-          .text(title);
+        .text(title);
 
-      // Set the legend.
-      var legend = g.select(".legend").selectAll("g")
-          .data(labels)
-        .enter().append("g")
-          .attr("class", "legend")
-          .attr("transform", function(d, i) { return "translate(" + (margin.right) + "," + i * 20 + ")"; });
-      
-      legend.append("rect")
-          .attr("x", width - 18)
-          .attr("width", 18)
-          .attr("height", 18)
-          .style("fill", C);
-      
-      legend.append("text")
-          .attr("x", width - 24)
-          .attr("y", 9)
-          .attr("dy", ".35em")
-          .style("text-anchor", "end")
-          .text(function(d) {
-            return d;
+      // Legend: Bind data
+      var lgnds = g.select(".legend").selectAll(".legend-element")
+        .data(labels); // UPDATE
+
+      // Legend: append labels (if they do not already exist)
+      var lgnds_enter = lgnds.enter().append("g")
+        .attr("class", "legend-element")
+        .attr("transform", function(d, i) { return "translate(" + (margin.right) + "," + i * 20 + ")"; });
+      lgnds_enter.append("rect")
+        .attr("x", width - 18)
+        .attr("width", 16)
+        .attr("height", 16)
+        .style("fill", function(d, i) { return hide[i] ? "#ffffff" : C(d, i); })
+        .style("stroke", C)
+        .style("stroke-width", 2);
+      lgnds_enter.append("text")
+        .attr("x", width - 24)
+        .attr("y", 9)
+        .attr("dy", ".35em")
+        .style("text-anchor", "end")
+        .text(function(d) {
+          return d;
+        });
+      lgnds_enter.on("click", function(d, i) {
+        chart.hide()[i] = !chart.hide()[i];
+        chart(selection);
+      });
+
+      lgnds.select("rect")
+          .style("fill", function(d, i) {
+            var myCol = hide[i] ? "#ffffff" : C(d, i);
+            return myCol;
           });
 
       // Draw the bars.
@@ -409,6 +436,12 @@ function baseChart() {
     return chart;
   };
 
+  chart.hide = function(_) {
+    if (!arguments.length) return hide;
+    hide = _;
+    return chart;
+  };
+
   chart.colors = function(_) {
     if (!arguments.length) return colors;
     colors = _;
@@ -457,8 +490,20 @@ var columnRndr = {
   },
   update: function(selection, chart, data) {
     if (chart.transition()) {
-      // TODO: set initial state here
-      selection = selection.transition().duration(500).delay(function(d, i, j) { return j * 1000; });
+      //Exclude hidden series indecies
+      var idxExclHidden = [];
+      var j = 0;
+      data.forEach(function(d, i) {
+        idxExclHidden.push(chart.hide()[i] ? 0 : j++); // hidden get index 0
+      });
+
+      if (selection.enter()[0][0] == undefined) {
+        selection = selection.transition().duration(500);
+      } else {
+        selection = selection.transition().duration(500).delay(function(d, i, j) { return idxExclHidden[j] * 500; });
+      }
+        
+
     }
     if (chart.stacked()) {
       // stacked
@@ -471,9 +516,12 @@ var columnRndr = {
       // grouped
       selection
         .attr("x", function(d, i, j) { return chart.X(d) + chart.xScale.rangeBand() / data.length * j; })
-        .attr("y", function(d) { return chart.Y(d); })
+        .attr("y", function(d, i, j) { return chart.hide()[j] ? chart.yScale(0) : chart.Y(d); })
         .attr("width", chart.xScale.rangeBand() / data.length)
-        .attr("height", function(d) { return chart.height() - chart.Y(d); });
+        .attr("height", function(d, i, j) { 
+            return chart.hide()[j] ? 0 : chart.height() - chart.Y(d);
+
+        });
     }
   }
 };
