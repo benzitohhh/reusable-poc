@@ -524,42 +524,46 @@ function regChart() {
 
 
 // ================= CLIENT =============================
-fakeMissingGrantDates();
+//fakeMissingGrantDates();
+
+var boseClusters = eqip.boseClusters;
+var bosePfams = eqip.bosePatFams;
+
 var outcomes = getSeries_outcomes();
 var cluster = getSeries_cluster();
 var company = getSeries_company();
 
-d3.select("#outcome-chart")
-  .datum(outcomes.series)  // bind data to selection
- .call(regChart()
-    .labels(outcomes.labels)
-    .colors({1: "#f39c12"})
-    .title("Bose (Cluster #1): Registrations per Year, by Outcome")
-    //.stacked(true)
-    .transition(true)
- );
+// d3.select("#outcome-chart")
+//   .datum(outcomes.series)  // bind data to selection
+//  .call(regChart()
+//     .labels(outcomes.labels)
+//     .colors({1: "#f39c12"})
+//     .title("Bose (Cluster #1): Registrations per Year, by Outcome")
+//     .stacked(true)
+//     .transition(true)
+//  );
 
-d3.select("#cluster-chart")
-  .datum(cluster.series)  // bind data to selection
-  .call(regChart()
-    .labels(cluster.labels)
-    .colors(["#000000", "#00FF00", "#FF6600", "#3399FF"])
-    .title("Bose: Registrations per Year, by Cluster")
-    .stacked(true)
-    .transition(true)
-  );
+// d3.select("#cluster-chart")
+//   .datum(cluster.series)  // bind data to selection
+//   .call(regChart()
+//     .labels(cluster.labels)
+//     .colors(["#000000", "#00FF00", "#FF6600", "#3399FF"])
+//     .title("Bose: Registrations per Year, by Cluster")
+//     .stacked(true)
+//     .transition(true)
+//   );
 
-var myChart = regChart()
-                .labels(company.labels)
-                .title("Bose & Peers: Registrations per Year, by Company")
-                .stacked(true)
-                .colors(["#000000", "#00FF00", "#FF6600", "#3399FF", "#0000FF", "#999"])
-                .transition(true)
-;
+// var myChart = regChart()
+//                 .labels(company.labels)
+//                 .title("Bose & Peers: Registrations per Year, by Company")
+//                 .stacked(true)
+//                 .colors(["#000000", "#00FF00", "#FF6600", "#3399FF", "#0000FF", "#999"])
+//                 .transition(true)
+// ;
 
-d3.select("#company-chart")
-  .datum(company.series)  // bind data to selecti 
-  .call(myChart);
+// d3.select("#company-chart")
+//   .datum(company.series)  // bind data to selecti 
+//   .call(myChart);
 
 // setInterval(function() {
 //     // Update (with new fake data)
