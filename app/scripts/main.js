@@ -535,7 +535,7 @@ d3.select("#outcome-chart")
     .labels(outcomes.labels)
     .colors({1: "#f39c12"})
     .title("Bose (Cluster #1): Registrations per Year, by Outcome")
-    .stacked(true)
+    //.stacked(true)
     .transition(true)
  );
 
