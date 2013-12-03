@@ -1,67 +1,6 @@
 // ================== DATA ===============================
 
 /**
- Returns outcome -> (year -> freq)
- i.e. "outcome" is accepted/pending/expired
-*/
-function getSeries_outcomes(){
-  var cluster = eqip.boseClusters[0].members;
-
-  // get pFams
-  var pFams = cluster.map(function(pId) {
-                var p = eqip.bosePatFams[pId];
-                if (!p) { console.log("MISSING patFam: id=" + pId); }
-                return p;
-              }).filter(function(p) { return p != null; });
-
-  // Construct histograms: outcome -> (year -> freq)
-  var counts = {"grant":{}, "priority":{}, "priority_accepted":{}, "priority_pending":{}, "priority_expired":{} },
-      yearsSet = {},
-      currDate = new Date(),
-      secs_in_year = 1000 * 60 * 60 * 24 * 365,
-      inc = function(o, k) { o[k] = o[k] ? o[k] + 1 : 1; };
-  pFams.forEach(function(p) {
-          // for each patFam p in cluster...
-          // extract priority year (should always exist)
-          var priYr = p.priorityDate.slice(0, 4);
-          yearsSet[priYr] = true;
-          inc(counts['priority'], priYr);
-          if (p.grantDate) {
-            // Grant year exists (i.e. application was accepted)
-            var graYr = p.grantDate.slice(0, 4);
-            yearsSet[graYr] = true;
-            inc(counts['grant'], graYr);
-            inc(counts['priority_accepted'], priYr);
-          } else if (new Date(p.priorityDate).getTime() + 4 * secs_in_year < currDate) {
-            // Patent application has expired
-            // ie We assume applications automatically expire after 4 years
-            inc(counts['priority_expired'], priYr);
-          } else {
-            // Application may still be pending.
-            // It could also be rejected, we don't know from the data.
-            inc(counts['priority_pending'], priYr);
-          }
-        });
-
-  // Calculate x domain (range of years)
-  var yearsArr = d3.keys(yearsSet).sort();
-  var years = d3.range(+yearsArr[0], +yearsArr[yearsArr.length - 1] + 1);
-
-  var labels = {
-    "priority_accepted": "accepted", 
-    "priority_pending":  "pending",
-    "priority_expired":  "expired"
-  };
-
-  // Transform histograms to series
-  var series = d3.keys(labels).map(function(s) {
-    return years.map(function(year) { return {x: year, y: counts[s][year] ? counts[s][year] : 0 }; });
-  });
-  
-  return { series: series, labels: d3.values(labels) };
-}
-
-/**
  Returns cluster -> (year -> freq)
 */
 function getSeries_cluster() {
@@ -523,25 +462,64 @@ function regChart() {
 }
 
 
+// ================= TEMP FUNCTIONS FOR FAKE DATA ======
+function randomPriDate(priDateStr) {
+  // apply noise to priDate (ensure result within [1965, 2012]
+  var priYr = +priDateStr.slice(0, 4);
+  var delta_max = 2013 - priYr;
+  var delta_min = Math.min(0, 1965 - priYr);
+  var delta = Math.floor(delta_min + (delta_max - delta_min) * Math.random());
+  var nYear = priYr + delta;
+  return nYear + "" + priDateStr.slice(4);    
+}
+
+function getFakeData(patFams) {
+  return patFams.map(function(p) {
+    var np = $.extend(true, {}, p);
+    np.priorityDate = randomPriDate(np.priorityDate);
+    return np;
+  });
+}
+
+function getFakePatfamsByCompany(bose_pFams, hiwave_pFams) {
+  return {
+    "Bose"                 : bose_pFams,
+    "Hiwave"               : hiwave_pFams,
+    "Global Omnicorp"      : getFakeData(bose_pFams),
+    "Patently Obvious PLC" : getFakeData(bose_pFams),
+    "Kinda Big Deal inc."  : getFakeData(bose_pFams),
+    "Holding Holdings"     : getFakeData(hiwave_pFams),
+    "Acme LLC"             : getFakeData(hiwave_pFams)
+  };
+}
+
+
 // ================= CLIENT =============================
-//fakeMissingGrantDates();
+fakeMissingGrantDates();
 
-var boseClusters = eqip.boseClusters;
-var bosePfams = eqip.bosePatFams;
+var series               = eqip.model.series,
+    util                 = eqip.model.util,
+    boseClusterToAccNums = eqip.boseClusters,   // SOURCE DATA
+    boseAccNumToPfam     = eqip.bosePatFams,    // SOURCE DATA
+    hiwaveAccNumToPfam   = eqip.hiwavePatFams,  // SOURCE DATA
+    bosePfamsPerCluster  = util.getPfamsPerCluster(boseClusterToAccNums, boseAccNumToPfam),
+    pFamsPerCompany      = getFakePatfamsByCompany(
+                             d3.values(boseAccNumToPfam), d3.values(hiwaveAccNumToPfam)); // FAKE DATA
 
-var outcomes = getSeries_outcomes();
+var outcomes = series.registrationsPerYearPerOutcome(bosePfamsPerCluster[0] /* cluster 1 */);
+
 var cluster = getSeries_cluster();
 var company = getSeries_company();
 
-// d3.select("#outcome-chart")
-//   .datum(outcomes.series)  // bind data to selection
-//  .call(regChart()
-//     .labels(outcomes.labels)
-//     .colors({1: "#f39c12"})
-//     .title("Bose (Cluster #1): Registrations per Year, by Outcome")
-//     .stacked(true)
-//     .transition(true)
-//  );
+d3.select("#outcome-chart")
+  .datum(outcomes.series)  // bind data to selection
+ .call(regChart()
+    .labels(outcomes.labels)
+    .colors({1: "#f39c12"})
+    .title("Bose (Cluster #1): Registrations per Year, by Outcome")
+    .stacked(true)
+    .transition(true)
+ );
 
 // d3.select("#cluster-chart")
 //   .datum(cluster.series)  // bind data to selection

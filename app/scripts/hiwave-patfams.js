@@ -1,5 +1,5 @@
 var eqip = eqip || {};
-eqip.hiwavePatfams = {
+eqip.hiwavePatFams = {
 	"1997193105": {
 		"accessionNumber": "1997193105",
 		"title": "Vending machine with store of products to be dispensed|causes distributed mode acoustic radiator to resonate by vibrating transducer mounted wholly on it",

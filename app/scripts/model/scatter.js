@@ -1,7 +1,9 @@
-var eqip   = eqip || {};
-eqip.model = eqip.model || {};
-var scatter = eqip.model.scatter = eqip.model.scatter || {};
+(function() {
+  var eqip   = this.eqip || {};
+  eqip.model = eqip.model || {};
+  var scatter = eqip.model.scatter = eqip.model.scatter || {};
 
-scatter.strengthPerDate = function() {};
+  scatter.strengthPerDate = function() {};
 
-scatter.strengthPerDatePerKey = function() {};
+  scatter.strengthPerDatePerKey = function() {};
+})();
