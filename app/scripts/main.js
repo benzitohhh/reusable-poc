@@ -496,20 +496,24 @@ function getFakePatfamsByCompany(bose_pFams, hiwave_pFams) {
 
 // ================= CLIENT =============================
 fakeMissingGrantDates();
-
 var series               = eqip.model.series,
     util                 = eqip.model.util,
     boseClusterToAccNums = eqip.boseClusters,   // SOURCE DATA
     boseAccNumToPfam     = eqip.bosePatFams,    // SOURCE DATA
     hiwaveAccNumToPfam   = eqip.hiwavePatFams,  // SOURCE DATA
     bosePfamsPerCluster  = util.getPfamsPerCluster(boseClusterToAccNums, boseAccNumToPfam),
+    bosePfamsPerNamedCluster = boseClusterToAccNums.reduce(function(acc, d, i) { acc["cluster #" + (i+1)] = bosePfamsPerCluster[i]; return acc; }, {}),
+    boseAllPfams         = bosePfamsPerCluster.reduce(function(acc, d) { // WORKAROUND FOR MISMATCH IN CLUSTER/PAT FILES
+                             acc = acc.concat(d);
+                             return acc;
+                             }, []),
     pFamsPerCompany      = getFakePatfamsByCompany(
                              d3.values(boseAccNumToPfam), d3.values(hiwaveAccNumToPfam)); // FAKE DATA
 
 var outcomes = series.registrationsPerYearPerOutcome(bosePfamsPerCluster[0] /* cluster 1 */);
-
-var cluster = getSeries_cluster();
-var company = getSeries_company();
+var boseRegsPerYear = series.registrationsPerYear(boseAllPfams);
+var boseRegsPerClusterPerYear = series.registrationsPerYearPerKey(bosePfamsPerNamedCluster);
+var regsPerCompanyPerYear = series.registrationsPerYearPerKey(pFamsPerCompany);
 
 d3.select("#outcome-chart")
   .datum(outcomes.series)  // bind data to selection
@@ -521,27 +525,27 @@ d3.select("#outcome-chart")
     .transition(true)
  );
 
-// d3.select("#cluster-chart")
-//   .datum(cluster.series)  // bind data to selection
-//   .call(regChart()
-//     .labels(cluster.labels)
-//     .colors(["#000000", "#00FF00", "#FF6600", "#3399FF"])
-//     .title("Bose: Registrations per Year, by Cluster")
-//     .stacked(true)
-//     .transition(true)
-//   );
+d3.select("#cluster-chart")
+  .datum(boseRegsPerClusterPerYear.series)  // bind data to selection
+  .call(regChart()
+    .labels(boseRegsPerClusterPerYear.labels)
+    .colors(["#000000", "#00FF00", "#FF6600", "#3399FF"])
+    .title("Bose: Registrations per Year, by Cluster")
+    .stacked(true)
+    .transition(true)
+  );
 
-// var myChart = regChart()
-//                 .labels(company.labels)
-//                 .title("Bose & Peers: Registrations per Year, by Company")
-//                 .stacked(true)
-//                 .colors(["#000000", "#00FF00", "#FF6600", "#3399FF", "#0000FF", "#999"])
-//                 .transition(true)
-// ;
+var myChart = regChart()
+                .labels(regsPerCompanyPerYear.labels)
+                .title("Bose & Peers: Registrations per Year, by Company")
+                .stacked(true)
+                .colors(["#000000", "#00FF00", "#FF6600", "#3399FF", "#0000FF", "#999"])
+                .transition(true)
+;
 
-// d3.select("#company-chart")
-//   .datum(company.series)  // bind data to selecti 
-//   .call(myChart);
+d3.select("#company-chart")
+  .datum(regsPerCompanyPerYear.series)  // bind data to selecti 
+  .call(myChart);
 
 // setInterval(function() {
 //     // Update (with new fake data)
