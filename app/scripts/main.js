@@ -413,9 +413,9 @@ var regs_bose_byCompany       = series.registrationsPerYearPerKey(pFamsPerCompan
 
 // Get models: CUMULATIVE REGISTRATIONS (only accepted)
 var cuml_boseClstr1_byOutcome = series.cumlRightsPerYearPerOutcome(bosePfamsPerCluster[0] /* cluster 1 */);
-// var cuml_bose                 = series.cumlRightsPerYear(boseAllPfams); // single series
-// var cuml_bose_byCluster       = series.cumlRightsPerYearPerKey(bosePfamsPerNamedCluster);
-// var cuml_bose_byCompany       = series.cumlRightsPerYearPerKey(pFamsPerCompany);
+var cuml_bose                 = series.cumlRightsPerYear(boseAllPfams); // single series
+var cuml_bose_byCluster       = series.cumlRightsPerYearPerKey(bosePfamsPerNamedCluster);
+var cuml_bose_byCompany       = series.cumlRightsPerYearPerKey(pFamsPerCompany);
 
 
 // Render charts
