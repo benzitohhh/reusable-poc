@@ -18,10 +18,10 @@
     return d3.range(+yearsArr[0], +yearsArr[yearsArr.length - 1] + 1);
   }
 
-  function getAsSeries(keyToOrdinalToVal, ordinalSet) {
+  function getAsStackableSeries(keyToOrdinalToVal, ordinalSet) {
     // Given (key -> (ordinal -> val)) and a set of ordinals,
     // return an array of "ordinal series".
-    // i.e. Each series contains an element for each members of the ordinal set.
+    // i.e. Each series has the same number of elements (one per member of the orderinal set)
     return d3.values(keyToOrdinalToVal).map(function(vals) {
       return ordinalSet.map(function(ordinal) {
         return {x: ordinal, y: vals[ordinal] ? vals[ordinal] : 0 };
@@ -33,7 +33,6 @@
    * Returns (outcome -> (year -> freq)).
    */
   series.registrationsPerYearPerOutcome = function(pFams) {
-
     // Construct histograms: outcome -> (year -> freq)
     var countsPerOc = {"grant":{}, "priority":{}, "priority_accepted":{}, "priority_pending":{}, "priority_expired":{} },
         yearsSet = {},
@@ -63,51 +62,32 @@
       }
     });
 
-    // Calculate x domain (range of years)
-    var years = getYearRange(yearsSet);
+    var years = getYearRange(yearsSet); // Calculate x domain (range of years)
 
-    // For now, we are only interested in priority dates, so remove the others.
+    // We are only interested in priority dates, so remove the others.
     delete countsPerOc["grant"];
     delete countsPerOc["priority"];
 
-    // Transform histograms to series
-    var labels = {
-      "priority_accepted": "accepted", 
-      "priority_pending":  "pending",
-      "priority_expired":  "expired"
-    };
-    var series = getAsSeries(countsPerOc, years);
-
-    return { series: series, labels: d3.keys(countsPerOc).map(function(d) { return labels[d]; }) };
+    return getAsStackableSeries(countsPerOc, years); // Transform to series
   };
 
   /**
    * Return (year -> freq), as a single series.
    */
   series.registrationsPerYear = function(pFams) {
-    var counts = getRgCountsPerYear(pFams);
-
-    // Calculate x domain (range of years)
-    var years = getYearRange(counts);
-
-    // Transform histograms to series
-    return years.map(function(year) { return { x: year, y: counts[year] ? counts[year] : 0 }; });
+    var counts = getRgCountsPerYear(pFams);       // histogram
+    var years  = getYearRange(counts);            // Calculate x domain (range of years)
+    return getAsStackableSeries([counts], years); // Transform to series
   };
 
   /**
    * Returns (key -> (year -> freq)).
    */
   series.registrationsPerYearPerKey = function(keyToPfams) {
-    var countsPerKey = d3.values(keyToPfams).map(getRgCountsPerYear);
-
-    // Calculate x domain (range of years)
-    var yearMap = countsPerKey.reduce(function(acc, d) { return $.extend(acc, d); }, {});
-    var years = getYearRange(yearMap);
-
-    // Transform histograms to series
-    var series = getAsSeries(countsPerKey, years);
-
-    return { series: series, labels: d3.keys(keyToPfams) };
+    var countsPerKey = d3.values(keyToPfams).map(getRgCountsPerYear); // histograms
+    var yearMap      = countsPerKey.reduce(function(acc, d) { return $.extend(acc, d); }, {});
+    var years        = getYearRange(yearMap); // Calculate x domain (range of years)
+    return getAsStackableSeries(countsPerKey, years); // Transform to series
   };
 
   // Returns (outcome -> (year -> freq)).

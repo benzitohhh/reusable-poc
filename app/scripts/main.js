@@ -510,41 +510,44 @@ var series               = eqip.model.series,
     pFamsPerCompany      = getFakePatfamsByCompany(
                              d3.values(boseAccNumToPfam), d3.values(hiwaveAccNumToPfam)); // FAKE DATA
 
-var outcomes = series.registrationsPerYearPerOutcome(bosePfamsPerCluster[0] /* cluster 1 */);
-var boseRegsPerYear = series.registrationsPerYear(boseAllPfams);
+// Get models
+var outcomes                  = series.registrationsPerYearPerOutcome(bosePfamsPerCluster[0] /* cluster 1 */);
+var boseRegsPerYear           = series.registrationsPerYear(boseAllPfams);
 var boseRegsPerClusterPerYear = series.registrationsPerYearPerKey(bosePfamsPerNamedCluster);
-var regsPerCompanyPerYear = series.registrationsPerYearPerKey(pFamsPerCompany);
+var regsPerCompanyPerYear     = series.registrationsPerYearPerKey(pFamsPerCompany);
 
+
+// Render charts
 d3.select("#outcome-chart")
-  .datum(outcomes.series)  // bind data to selection
+  .datum(outcomes)  // bind data to selection
  .call(regChart()
-    .labels(outcomes.labels)
+    .labels(["accepted", "pending", "expired"])
     .colors({1: "#f39c12"})
-    .title("Bose (Cluster #1): Registrations per Year, by Outcome")
+    .title("BY OUTCOME: Bose (Cluster #1): Registrations per Year")
     .stacked(true)
     .transition(true)
  );
 
 d3.select("#cluster-chart")
-  .datum(boseRegsPerClusterPerYear.series)  // bind data to selection
+  .datum(boseRegsPerClusterPerYear)  // bind data to selection
   .call(regChart()
-    .labels(boseRegsPerClusterPerYear.labels)
+    .labels(d3.keys(boseRegsPerClusterPerYear).map(function(d) { return "cluster #" + (+d+1); }))
     .colors(["#000000", "#00FF00", "#FF6600", "#3399FF"])
-    .title("Bose: Registrations per Year, by Cluster")
+    .title("BY CLUSTER: Bose: Registrations per Year")
     .stacked(true)
     .transition(true)
   );
 
 var myChart = regChart()
-                .labels(regsPerCompanyPerYear.labels)
-                .title("Bose & Peers: Registrations per Year, by Company")
+                .labels(d3.keys(pFamsPerCompany))
+                .title("BY COMPANY: Bose & Peers: Registrations per Year")
                 .stacked(true)
                 .colors(["#000000", "#00FF00", "#FF6600", "#3399FF", "#0000FF", "#999"])
                 .transition(true)
 ;
 
 d3.select("#company-chart")
-  .datum(regsPerCompanyPerYear.series)  // bind data to selecti 
+  .datum(regsPerCompanyPerYear)  // bind data to selecti 
   .call(myChart);
 
 // setInterval(function() {
