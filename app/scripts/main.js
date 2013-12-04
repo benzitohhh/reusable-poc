@@ -1,18 +1,3 @@
-/*
- Simulate variation in Bose Cluster 0,
- by randomly removing some grant dates.
-*/
-function fakeMissingGrantDates(){
-  var cluster = eqip.boseClusters[0].members;
-  // remove grant date for the first and last quarters
-  cluster.slice(0, Math.ceil(cluster.length / 4))
-    .concat(cluster.slice(cluster.length - Math.ceil(cluster.length / 4)))
-    .forEach(function(pId) {
-      delete eqip.bosePatFams[pId].grantDate;
-    });
-}
-
-
 // ================== CHART ==============================
 function baseChart() {
   // see http://bost.ocks.org/mike/chart/
@@ -358,6 +343,15 @@ function regChart() {
 
 
 // ================= TEMP FUNCTIONS FOR FAKE DATA ======
+function fakeMissingGrantDates(pFams){
+  // Select first and last quarter of the fams.
+  var subset = pFams.slice(0, Math.ceil(pFams.length / 4))
+                    .concat(pFams.slice(pFams.length - Math.ceil(pFams.length / 4)));
+
+  // Remove grant dates on the subset (to simulate missing grant dates)
+  subset.forEach(function(p) { delete p.grantDate; });
+}
+
 function randomPriDate(priDateStr) {
   // apply noise to priDate (ensure result within [1965, 2012]
   var priYr = +priDateStr.slice(0, 4);
@@ -390,7 +384,7 @@ function getFakePatfamsByCompany(bose_pFams, hiwave_pFams) {
 
 
 // ================= CLIENT =============================
-fakeMissingGrantDates();
+fakeMissingGrantDates(d3.values(eqip.bosePatFams));
 var series               = eqip.model.series,
     util                 = eqip.model.util,
     boseClusterToAccNums = eqip.boseClusters,   // SOURCE DATA
