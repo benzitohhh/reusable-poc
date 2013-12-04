@@ -337,10 +337,16 @@
     }
   }
 
-  function areaRndr(layerSelection, chart, data) {
-    // Select the rects, and bind data.
-    var rect = layerSelection.selectAll("rect").data(function(d) { return d; });
-    
+  function areaRndr(layerSelection, chart, data) {    
+    var area = d3.svg.area()
+          .x(chart.X)
+          .y0(chart.Y0)
+          .y1(chart.Y1);
+
+    // Append "path" per layer
+    layerSelection.append("path")
+      .attr("d", area)
+      .attr("class", "layer");
   }
 
   function registrationsChart() {

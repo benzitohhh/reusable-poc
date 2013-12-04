@@ -101,19 +101,19 @@ var chart = eqip.view.chart;
 //         .transition(true)
 //        );
 
-d3.select("#cuml-by-outcome")
-  .datum(regs_boseClstr1_byOutcome) // bind data
-  .call(chart.portfolioChart()
-        .labels(["accepted", "pending", "expired"])
-        .colors({1: "#f39c12"})
-        .title("BY STATUS: Bose (Cluster #1): Portfolio")
-        .stacked(true)
-        .transition(true)
-       );
+// d3.select("#cuml-by-outcome")
+//   .datum(cuml_boseClstr1_byOutcome) // bind data
+//   .call(chart.portfolioChart()
+//         .labels(["granted", "pending"])
+//         //.colors({1: "#f39c12"})
+//         .title("BY STATUS: Bose (Cluster #1): Portfolio")
+//         .stacked(true)
+//         .transition(true)
+//        );
 
 // d3.select("#cuml-by-cluster")
-//   .datum(regs_bose_byCluster) // bind data
-//   .call(chart.regChart()
+//   .datum(cuml_bose_byCluster) // bind data
+//   .call(chart.portfolioChart()
 //         .labels(d3.keys(regs_bose_byCluster).map(function(d) { return "cluster #" + (+d+1); }))
 //         .colors(["#000000", "#00FF00", "#FF6600", "#3399FF"])
 //         .title("BY CLUSTER: Bose: Portfolio")
@@ -121,12 +121,12 @@ d3.select("#cuml-by-outcome")
 //         .transition(true)
 //        );
 
-// d3.select("#cuml-by-company")
-//   .datum(regs_bose_byCompany) // bind data
-//   .call(chart.regChart()
-//         .labels(d3.keys(pFamsPerCompany))
-//         .title("BY COMPANY: Bose & Peers: Portfolio")
-//         .stacked(true)
-//         .colors(["#000000", "#00FF00", "#FF6600", "#3399FF", "#0000FF", "#999"])
-//         .transition(true)
-//        );
+d3.select("#cuml-by-company")
+  .datum(cuml_bose_byCompany) // bind data
+  .call(chart.portfolioChart()
+        .labels(d3.keys(pFamsPerCompany))
+        .title("BY COMPANY: Bose & Peers: Portfolio")
+        .stacked(true)
+        .colors(["#000000", "#00FF00", "#FF6600", "#3399FF", "#0000FF", "#999"])
+        .transition(true)
+       );
