@@ -103,7 +103,7 @@ var chart = eqip.view.chart;
 
 d3.select("#cuml-by-outcome")
   .datum(regs_boseClstr1_byOutcome) // bind data
-  .call(chart.regChart()
+  .call(chart.portfolioChart()
         .labels(["accepted", "pending", "expired"])
         .colors({1: "#f39c12"})
         .title("BY STATUS: Bose (Cluster #1): Portfolio")

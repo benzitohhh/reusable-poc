@@ -166,11 +166,7 @@
           .attr("class", "layer")
           .style("fill", C);
 
-        var rect = layer.selectAll("rect")
-              .data(function(d) { return d; });
-
-        render.enter(rect, chart, data);
-        render.update(rect, chart, data);
+        render(layer, chart, data);
       });
     }
 
@@ -282,71 +278,89 @@
     return chart;
   } // end of baseChart
 
-  var columnRndr = {
-    enter:  function(selection, chart, data) {
-      var rectEnter = selection.enter().append("rect");
-      if (chart.stacked()) {
-        // stacked
-        rectEnter
-          .attr("x", function(d) { return chart.X(d); })
-          .attr("y", function(d) { return chart.Y0(d); })
-          .attr("width", chart.xScale.rangeBand())
-          .attr("height", 0);
+  /**
+   * Renders a column chart.
+   */
+  function columnRndr(layerSelection, chart, data) {
+    // Select the rects, and bind data.
+    var rect = layerSelection.selectAll("rect").data(function(d) { return d; });
+
+    // If they don't exist yet, append them.
+    var rectEnter = rect.enter().append("rect");
+    if (chart.stacked()) {
+      // stacked
+      rectEnter
+        .attr("x", function(d) { return chart.X(d); })
+        .attr("y", function(d) { return chart.Y0(d); })
+        .attr("width", chart.xScale.rangeBand())
+        .attr("height", 0);
+    } else {
+      // grouped
+      rectEnter
+        .attr("x", function(d, i, j) { return chart.X(d) + chart.xScale.rangeBand() / data.length * j; })
+        .attr("y", function(d) { return chart.yScale(0); })
+        .attr("width", chart.xScale.rangeBand() / data.length)
+        .attr("height", 0);
+    }
+
+    if (chart.transition()) {
+      if (rect.enter()[0][0] == undefined) {
+        // Bars are already on-screen, so show fast transition.
+        rect = rect.transition().duration(200);
       } else {
-        // grouped
-        rectEnter
-          .attr("x", function(d, i, j) { return chart.X(d) + chart.xScale.rangeBand() / data.length * j; })
-          .attr("y", function(d) { return chart.yScale(0); })
-          .attr("width", chart.xScale.rangeBand() / data.length)
-          .attr("height", 0);
-      }
-    },
-    update: function(selection, chart, data) {
-      if (chart.transition()) {
-        if (selection.enter()[0][0] == undefined) {
-          // Bars are already on-screen, so show fast transition.
-          selection = selection.transition().duration(200);
-        } else {
-          // Bars are not yet on-screen, so show slower transition, with each series delayed individually.
-          var idxExclHidden = [];
-          var j = 0;
-          data.forEach(function(d, i) {
-            idxExclHidden.push(chart.hide()[i] ? 0 : j++); // hidden series excluded from delay (i.e. get index 0).
-          });
-          selection = selection.transition().duration(500).delay(function(d, i, j) { return idxExclHidden[j] * 500; });
-        }
-      }
-      if (chart.stacked()) {
-        // stacked
-        selection
-          .attr("x", function(d) { return chart.X(d); })
-          .attr("y", function(d) { return chart.Y1(d); })
-          .attr("width", chart.xScale.rangeBand())
-          .attr("height", function(d) { return chart.yScale(d.y0) - chart.yScale(d.y0 + d.y); });
-      } else {
-        // grouped
-        selection
-          .attr("x", function(d, i, j) { return chart.X(d) + chart.xScale.rangeBand() / data.length * j; })
-          .attr("y", function(d, i, j) { return chart.hide()[j] ? chart.yScale(0) : chart.Y(d); })
-          .attr("width", chart.xScale.rangeBand() / data.length)
-          .attr("height", function(d, i, j) { 
-            return chart.hide()[j] ? 0 : chart.height() - chart.Y(d);
-          });
+        // Bars are not yet on-screen, so show slower transition, with each series delayed individually.
+        var idxExclHidden = [];
+        var j = 0;
+        data.forEach(function(d, i) {
+          idxExclHidden.push(chart.hide()[i] ? 0 : j++); // hidden series excluded from delay (i.e. get index 0).
+        });
+        rect = rect.transition().duration(500).delay(function(d, i, j) { return idxExclHidden[j] * 500; });
       }
     }
-  };
 
-  function regChart() {
+    if (chart.stacked()) {
+      // stacked
+      rect
+        .attr("x", function(d) { return chart.X(d); })
+        .attr("y", function(d) { return chart.Y1(d); })
+        .attr("width", chart.xScale.rangeBand())
+        .attr("height", function(d) { return chart.yScale(d.y0) - chart.yScale(d.y0 + d.y); });
+    } else {
+      // grouped
+      rect
+        .attr("x", function(d, i, j) { return chart.X(d) + chart.xScale.rangeBand() / data.length * j; })
+        .attr("y", function(d, i, j) { return chart.hide()[j] ? chart.yScale(0) : chart.Y(d); })
+        .attr("width", chart.xScale.rangeBand() / data.length)
+        .attr("height", function(d, i, j) { 
+          return chart.hide()[j] ? 0 : chart.height() - chart.Y(d);
+        });
+    }
+  }
+
+  function areaRndr(layerSelection, chart, data) {
+    // Select the rects, and bind data.
+    var rect = layerSelection.selectAll("rect").data(function(d) { return d; });
+    
+  }
+
+  function registrationsChart() {
     return baseChart().render(columnRndr);
   }
 
+  function portfolioChart(){
+    return baseChart().render(areaRndr);  
+  }
+
+
   // export
-  var eqip      = this.eqip || {};
-  eqip.view     = eqip.view || {};
-  var ns        = eqip.view.chart = eqip.view.chart || {};
-  ns.baseChart  = baseChart;
-  ns.columnRndr = columnRndr;
-  ns.regChart   = regChart;
+  var eqip              = this.eqip || {};
+  eqip.view             = eqip.view || {};
+  var ns                = eqip.view.chart = eqip.view.chart || {};
+  ns.columnRndr         = columnRndr;
+  ns.areaRndr           = areaRndr;
+  ns.baseChart          = baseChart;
+  ns.registrationsChart = registrationsChart;
+  ns.portfolioChart     = portfolioChart;
 
 })();
 
