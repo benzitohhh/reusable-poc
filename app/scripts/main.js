@@ -510,16 +510,16 @@ var series               = eqip.model.series,
     pFamsPerCompany      = getFakePatfamsByCompany(
                              d3.values(boseAccNumToPfam), d3.values(hiwaveAccNumToPfam)); // FAKE DATA
 
-// Get models
-var outcomes                  = series.registrationsPerYearPerOutcome(bosePfamsPerCluster[0] /* cluster 1 */);
-var boseRegsPerYear           = series.registrationsPerYear(boseAllPfams);
-var boseRegsPerClusterPerYear = series.registrationsPerYearPerKey(bosePfamsPerNamedCluster);
-var regsPerCompanyPerYear     = series.registrationsPerYearPerKey(pFamsPerCompany);
+// Get models: ANNUAL REGISTRATIONS
+var regs_boseClstr1_byOutcome = series.registrationsPerYearPerOutcome(bosePfamsPerCluster[0] /* cluster 1 */);
+var regs_bose                 = series.registrationsPerYear(boseAllPfams); // single series
+var regs_bose_byCluster       = series.registrationsPerYearPerKey(bosePfamsPerNamedCluster);
+var regs_bose_byCompany       = series.registrationsPerYearPerKey(pFamsPerCompany);
 
 
 // Render charts
 d3.select("#outcome-chart")
-  .datum(outcomes)  // bind data to selection
+  .datum(regs_boseClstr1_byOutcome) // bind data to selection
  .call(regChart()
     .labels(["accepted", "pending", "expired"])
     .colors({1: "#f39c12"})
@@ -529,9 +529,9 @@ d3.select("#outcome-chart")
  );
 
 d3.select("#cluster-chart")
-  .datum(boseRegsPerClusterPerYear)  // bind data to selection
+  .datum(regs_bose_byCluster)  // bind data to selection
   .call(regChart()
-    .labels(d3.keys(boseRegsPerClusterPerYear).map(function(d) { return "cluster #" + (+d+1); }))
+    .labels(d3.keys(regs_bose_byCluster).map(function(d) { return "cluster #" + (+d+1); }))
     .colors(["#000000", "#00FF00", "#FF6600", "#3399FF"])
     .title("BY CLUSTER: Bose: Registrations per Year")
     .stacked(true)
@@ -547,7 +547,7 @@ var myChart = regChart()
 ;
 
 d3.select("#company-chart")
-  .datum(regsPerCompanyPerYear)  // bind data to selecti 
+  .datum(regs_bose_byCompany  )  // bind data to selecti 
   .call(myChart);
 
 // setInterval(function() {

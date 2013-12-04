@@ -91,7 +91,9 @@
   };
 
   // Returns (outcome -> (year -> freq)).
-  series.cumlRightsPerYearPerOutcome = function() {};
+  series.cumlRightsPerYearPerOutcome = function() {
+    
+  };
 
   // Return (year -> freq).
   series.cumlRightsPerYear = function() {};
