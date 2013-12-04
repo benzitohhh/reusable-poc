@@ -160,12 +160,13 @@
           chart(selection);
         });
         
-        // Layers (one per series): select, buind data, and append if not already existing.
+        // Layers (one per series): select, bind data, and append if not already existing.
         var layer = g.selectAll(".layer").data(function(d) { return d; });
         layer.enter().append("g")
           .attr("class", "layer")
           .style("fill", C);
 
+        // Render
         render(layer, chart, data);
       });
     }
@@ -304,7 +305,7 @@
     }
 
     if (chart.transition()) {
-      if (rect.enter()[0][0] == undefined) {
+      if (rect.enter().empty()) {
         // Bars are already on-screen, so show fast transition.
         rect = rect.transition().duration(200);
       } else {
@@ -337,16 +338,54 @@
     }
   }
 
-  function areaRndr(layerSelection, chart, data) {    
+  function areaRndr(layerSelection, chart, data) {
+    var zeroArea = d3.svg.area()
+          .x(chart.X)
+          .y0(chart.Y0)
+          .y1(chart.Y0)
+//          .y1(chart.yScale(0));
+          
     var area = d3.svg.area()
           .x(chart.X)
           .y0(chart.Y0)
           .y1(chart.Y1);
 
-    // Append "path" per layer
-    layerSelection.append("path")
-      .attr("d", area)
-      .attr("class", "layer");
+    // Select path element (per layer)
+    var path = layerSelection.select("path").data(function(d) { return d; });
+    var init = !path.enter().empty(); 
+
+    // PROBLEM:  On initialise, path.enter() is non-empty.
+    //           But it will append() to the container, rather than the g.layer
+    // SOLUTION: Append to the layerSelection (rather than to layerSelection.select("path").data(..).enter())
+    //           Then reset the reference
+
+    if (init) {
+      // Path elements do not exist yet, so append them.
+      layerSelection.append("path")
+        .attr("d", zeroArea);
+
+      // reset selection reference (see workround note above)
+      path = layerSelection.select("path");
+    }
+
+    if (chart.transition()) {
+      if (!init) {
+        // Paths are already onscreen, so set fast transition.
+        path = path.transition().duration(200);
+      } else {
+        // Paths are not yet onscreen, so set slower transition, with each series delayed individually.
+        var idxExclHidden = [];
+        var j = 0;
+        data.forEach(function(d, i) {
+          idxExclHidden.push(chart.hide()[i] ? 0 : j++); // hidden series excluded from delay (i.e. get index 0).
+        });
+        path = path.transition().duration(500).delay(function(d, i) { return idxExclHidden[i] * 500; });
+      }      
+    }
+
+    // Update path
+    path.attr("d", area);
+
   }
 
   function registrationsChart() {
