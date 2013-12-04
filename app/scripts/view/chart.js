@@ -160,10 +160,8 @@
           chart(selection);
         });
         
-        // Draw the bars.
-        var layer = g.selectAll(".layer")
-              .data(function(d) { return d; }); // bind data
-
+        // Layers (one per series): select, buind data, and append if not already existing.
+        var layer = g.selectAll(".layer").data(function(d) { return d; });
         layer.enter().append("g")
           .attr("class", "layer")
           .style("fill", C);
