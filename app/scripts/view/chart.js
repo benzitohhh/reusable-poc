@@ -4,21 +4,22 @@
 (function() {
 
   function baseChart() {
-    var margin      = {top: 40, right: 150, bottom: 30, left: 40},
-        width       = 600 - margin.left - margin.right,
-        height      = 400 - margin.top - margin.bottom,
-        labels      = [],
-        title       = "",
-        hide        = {/*0: true, 1: true, 2: true*/},
-        transition  = false,
-        stacked     = false,
-        colors      = [],
-        defCol      = d3.scale.linear().range(["#00f", "#f00"]),
-        xValue      = function(d) { return d.x; }, // default x-accessor
-        yValue      = function(d) { return d.y; }, // default y-accessor
-        xScale      = d3.scale.ordinal().rangeRoundBands([0, width], 0.5),
-        yScale      = d3.scale.linear().rangeRound([height, 0]),
-        xAxis       = d3.svg.axis().scale(xScale)
+    var margin       = {top: 40, right: 150, bottom: 30, left: 40},
+        width        = 600 - margin.left - margin.right,
+        height       = 400 - margin.top - margin.bottom,
+        labels       = [],
+        title        = "",
+        hide         = {/*0: true, 1: true, 2: true*/},
+        transition   = false,
+        stacked      = false,
+        stackOffset  = "zero",
+        colors       = [],
+        defCol       = d3.scale.linear().range(["#00f", "#f00"]),
+        xValue       = function(d) { return d.x; }, // default x-accessor
+        yValue       = function(d) { return d.y; }, // default y-accessor
+        xScale       = d3.scale.ordinal().rangeRoundBands([0, width], 0.5),
+        yScale       = d3.scale.linear().rangeRound([height, 0]),
+        xAxis        = d3.svg.axis().scale(xScale)
           .ticks(10)
           .tickSubdivide(0) // don't show decimals
           .outerTickSize(0) // don't show outer ticks
@@ -46,7 +47,8 @@
           });
         });
 
-        if (stacked) {        
+        if (stacked) {
+          stack.offset(stackOffset);
           data = stack(data); // Add y0 (baseline)
         }
 
@@ -276,6 +278,12 @@
       return chart;
     };
 
+    chart.stackOffset = function(_) {
+      if (!arguments.length) return stackOffset;
+      stackOffset = _;
+      return chart;
+    };
+
     return chart;
   } // end of baseChart
 
@@ -342,8 +350,7 @@
     var zeroArea = d3.svg.area()
           .x(chart.X)
           .y0(chart.Y0)
-          .y1(chart.Y0)
-//          .y1(chart.yScale(0));
+          .y1(chart.Y0);
           
     var area = d3.svg.area()
           .x(chart.X)
@@ -393,7 +400,9 @@
   }
 
   function portfolioChart(){
-    return baseChart().render(areaRndr);  
+    return baseChart()
+      .render(areaRndr)
+      .stacked(true);  
   }
 
 
