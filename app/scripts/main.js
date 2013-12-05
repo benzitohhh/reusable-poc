@@ -103,6 +103,7 @@ function demo2() {
          );
 }
 
+demo3()
 function demo3() {
   // LINE -> AREA -> STREAM -> STREAM_%
   d3.select("#cuml-by-cluster")

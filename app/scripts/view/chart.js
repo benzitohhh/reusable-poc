@@ -360,7 +360,7 @@
       layerSelection.style("fill", chart.C)
         .style("fill", "none")
         .style("stroke", chart.C)
-        .style("stroke-width", 2);
+        .style("stroke-width", function(d, i) { return chart.hide()[i] ? 0 : 2; });
     }
 
     var areaZero = d3.svg.area()
