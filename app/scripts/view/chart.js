@@ -197,6 +197,11 @@
       return colors[i] ? colors[i] : defCol(i); // if user-defined color exists use it, otherwise default
     };
 
+    function hideYAxisLabels() {
+      yAxis.tickFormat("");
+    } 
+
+    // Public functions (exposed for use in render etc...)
     chart.X  = X;
     chart.Y  = Y;
     chart.Y0 = Y0;
@@ -205,82 +210,136 @@
     chart.xScale = xScale;
     chart.yScale = yScale;
 
+    // Getter/Setters (return chart, which is convenient for chaining)
+    // These are used internally (i.e. within render function) AND externally (chaining).
     chart.margin = function(_) {
       if (!arguments.length) return margin;
       margin = _;
       return chart;
     };
-
     chart.width = function(_) {
       if (!arguments.length) return width;
       width = _;
       return chart;
     };
-
     chart.height = function(_) {
       if (!arguments.length) return height;
       height = _;
       return chart;
     };
-
     chart.x = function(_) {
       if (!arguments.length) return xValue;
       xValue = _;
       return chart;
     };
-
     chart.y = function(_) {
       if (!arguments.length) return yValue;
       yValue = _;
       return chart;
     };
-
     chart.labels = function(_) {
       if (!arguments.length) return labels;
       labels = _;
       return chart;
     };
-
     chart.title = function(_) {
       if (!arguments.length) return title;
       title = _;
       return chart;
     };
-
     chart.hide = function(_) {
       if (!arguments.length) return hide;
       hide = _;
       return chart;
     };
-
     chart.colors = function(_) {
       if (!arguments.length) return colors;
       colors = _;
       return chart;
     };
-
     chart.transition = function(_) {
       if (!arguments.length) return transition;
       transition = _;
       return chart;
     };
-
     chart.stacked = function(_) {
       if (!arguments.length) return stacked;
       stacked = _;
       return chart;
     };
-    chart.area = chart.stacked; // shortcut
-
     chart.render = function(_) {
       if (!arguments.length) return render;
       render = _;
       return chart;
     };
-
+    chart.xAxis = function(_) {
+      if (!arguments.length) return xAxis;
+      xAxis = _;
+      return chart;
+    };
+    chart.yAxis = function(_) {
+      if (!arguments.length) return yAxis;
+      yAxis = _;
+      return chart;
+    };
     chart.stackOffset = function(_) {
       if (!arguments.length) return stackOffset;
       stackOffset = _;
+      return chart;
+    };
+    
+    // Setters (not getters). Sets val regardless of whether args provided or not.
+    chart.column = function() { 
+      render = columnRndr;
+      return chart;
+    };    
+    chart.area = function() { 
+      stacked = true;
+      render = lineRndr;
+      return chart;
+    };
+    chart.line = function() { 
+      stacked = false;
+      render = lineRndr;
+      return chart;
+    };    
+    chart.stack = function() { 
+      stacked = true;
+      return chart;
+    };
+    chart.group = function() {
+      stacked = false;
+      return chart;
+    };
+    chart.stream = function(_) {
+      if (_ || (!arguments.length)) {
+        hideYAxisLabels();
+        stackOffset =  "wiggle";
+      } else {
+        stackOffset = "zero";
+      }
+      return chart;
+    };    
+    chart.streamRel = function(_) {
+      if (_ || (!arguments.length)) {
+        hideYAxisLabels();
+        stackOffset =  "expand";
+      } else {
+        stackOffset = "zero";
+      }
+      return chart;
+    };
+    chart.streamCtr = function(_) {
+      if (_ || (!arguments.length)) {
+        hideYAxisLabels();
+        stackOffset =  "silhouette";
+      } else {
+        stackOffset = "zero";
+      }
+      return chart;
+    };
+    chart.hideYAxisLabels = function() {
+      hideYAxisLabels();
       return chart;
     };
 
@@ -288,7 +347,7 @@
   } // end of baseChart
 
   /**
-   * Renders a column chart.
+   * Renders rects for column charts (both stacked and grouped).
    */
   function columnRndr(layerSelection, chart, data) {
     // Set fill for layer.
@@ -349,9 +408,12 @@
     }
   }
 
+  /**
+   * Renders path for Line and Area charts (including stream charts).
+   */
   function lineRndr(layerSelection, chart, data) {
     // Set fill for layer.
-    if (chart.area()) {
+    if (chart.stacked()) {
       layerSelection
         .style("fill", chart.C)
         .style("stroke", "none")
@@ -395,7 +457,7 @@
     if (init) {
       // Path elements do not exist yet, so append them.
       layerSelection.append("path")
-        .attr("d", chart.area() ? areaZero : lineZero);
+        .attr("d", chart.stacked() ? areaZero : lineZero);
 
       // reset selection reference (see workround note above)
       path = layerSelection.select("path");
@@ -417,7 +479,7 @@
     }
 
     // Update path
-    path.attr("d", chart.area() ? area : line);
+    path.attr("d", chart.stacked() ? area : line);
   }
 
   function registrationsChart() {
@@ -431,7 +493,6 @@
       .render(lineRndr)
       .stacked(true);  
   }
-
 
   // export
   var eqip              = this.eqip || {};

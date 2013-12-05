@@ -43,7 +43,7 @@ function getFakePatfamsByCompany(bose_pFams, hiwave_pFams) {
 
 
 // ================= CLIENT =============================
-//fakeMissingGrantDates(d3.values(eqip.bosePatFams));
+fakeMissingGrantDates(d3.values(eqip.bosePatFams));
 var series                    = eqip.model.series,
     util                      = eqip.model.util,
     boseClusterToAccNums      = eqip.boseClusters,   // SOURCE DATA
@@ -73,6 +73,9 @@ var cuml_bose_byCompany       = series.cumlRightsPerYearPerKey(pFamsPerCompany);
 // Chart library
 var chart = eqip.view.chart;
 
+
+
+//=========== DEMOS ===========
 function demo1() {
   // 1. COLUMN CHART: STACKED
   // 2. Show with fake data.
@@ -85,12 +88,12 @@ function demo1() {
           .colors({1: "#f39c12"})
           .title("BY OUTCOME: Bose (Cluster #1): Registrations per Year")
           .transition(true)
-          //.stacked(false)
+          //.group() // uncomment for grouped (rather than stacked)
          );  
 }
 
 function demo2() {
-  // COLUMN -> AREA -> LINE
+  // COLUMN -> AREA (and streams) -> LINE
   d3.select("#reg-by-company")
     .datum(regs_bose_byCompany) // bind data
     .call(chart.registrationsChart()
@@ -98,27 +101,15 @@ function demo2() {
           .title("BY COMPANY: Bose & Peers: Registrations per Year")
           .colors(["#000000", "#00FF00", "#FF6600", "#3399FF", "#0000FF", "#999"])
           .transition(true)
-          // .render(chart.lineRndr)
-          // .stacked(false)
+          // By default, this is a stacked column chart...
+          //.area() // uncomment for area chart
+          //  .stream()     // stream: combine with area()
+          //  .streamRel()  // stream relative: combine with area()
+          //.line() // uncomment for line graph
          );
 }
 
-demo3()
-function demo3() {
-  // LINE -> AREA -> STREAM -> STREAM_%
-  d3.select("#cuml-by-cluster")
-    .datum(cuml_bose_byCluster) // bind data
-    .call(chart.portfolioChart()
-          .labels(d3.keys(regs_bose_byCluster).map(function(d) { return "cluster #" + (+d+1); }))
-          .colors(["#000000", "#00FF00", "#FF6600", "#3399FF"])
-          .title("BY CLUSTER: Bose: Cumultive rights")
-          .transition(true)
-          .area(false)
-          // .stackOffset("wiggle")
-          // .stackOffset("expand")
-         );  
-}
-
+demoAll()
 function demoAll() {
   d3.select("#reg-by-outcome")
     .datum(regs_boseClstr1_byOutcome) // bind data
@@ -126,7 +117,6 @@ function demoAll() {
           .labels(["accepted", "pending", "expired"])
           .colors({1: "#f39c12"})
           .title("BY OUTCOME: Bose (Cluster #1): Registrations per Year")
-          .stacked(true)
           .transition(true)
          );
 
@@ -136,7 +126,6 @@ function demoAll() {
           .labels(d3.keys(regs_bose_byCluster).map(function(d) { return "cluster #" + (+d+1); }))
           .colors(["#000000", "#00FF00", "#FF6600", "#3399FF"])
           .title("BY CLUSTER: Bose: Registrations per Year")
-          .stacked(true)
           .transition(true)
          );
 
@@ -147,17 +136,13 @@ function demoAll() {
           .title("BY COMPANY: Bose & Peers: Registrations per Year")
           .colors(["#000000", "#00FF00", "#FF6600", "#3399FF", "#0000FF", "#999"])
           .transition(true)
-          // .render(chart.lineRndr)
-          // .stacked(false)
          );
 
   d3.select("#cuml-by-outcome")
     .datum(cuml_boseClstr1_byOutcome) // bind data
     .call(chart.portfolioChart()
           .labels(["granted", "pending"])
-          //.colors({1: "#f39c12"})
           .title("BY STATUS: Bose (Cluster #1): Portfolio")
-          .area(false)
           .transition(true)
          );
 
@@ -168,8 +153,6 @@ function demoAll() {
           .colors(["#000000", "#00FF00", "#FF6600", "#3399FF"])
           .title("BY CLUSTER: Bose: Portfolio")
           .transition(true)
-          // .stackOffset("wiggle")
-          // .stackOffset("expand")
          );
 
   d3.select("#cuml-by-company")
@@ -180,8 +163,6 @@ function demoAll() {
           .stacked(true)
           .colors(["#000000", "#00FF00", "#FF6600", "#3399FF", "#0000FF", "#999"])
           .transition(true)
-          // .stackOffset("wiggle")
-          // .stackOffset("expand")
          );
   
 }
