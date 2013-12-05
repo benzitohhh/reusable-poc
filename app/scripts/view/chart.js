@@ -24,17 +24,17 @@
           .tickSubdivide(0) // don't show decimals
           .outerTickSize(0) // don't show outer ticks
           .orient("bottom"),
-        yAxis       = d3.svg.axis()
+        yAxis        = d3.svg.axis()
           .scale(yScale)
           .orient("left")
           .tickFormat(d3.format("d"))
           .tickSize(-width) // extend ticks out, so they become grid lines
           .tickPadding(6)   // leave some space near labels
           .tickSubdivide(0), // don't show decimals
-        stack       = d3.layout.stack()
+        stack        = d3.layout.stack()
           .x(function(d) { return d[0]; })
           .y(function(d) { return d[1]; }),
-        render      = { enter: function() {}, update: function() {} };
+        render       = function() {};
 
     function chart(selection) {
       selection.each(function(data) {
@@ -165,8 +165,7 @@
         // Layers (one per series): select, bind data, and append if not already existing.
         var layer = g.selectAll(".layer").data(function(d) { return d; });
         layer.enter().append("g")
-          .attr("class", "layer")
-          .style("fill", C);
+          .attr("class", "layer");
 
         // Render
         render(layer, chart, data);
@@ -271,6 +270,7 @@
       stacked = _;
       return chart;
     };
+    chart.area = chart.stacked; // shortcut
 
     chart.render = function(_) {
       if (!arguments.length) return render;
@@ -291,6 +291,9 @@
    * Renders a column chart.
    */
   function columnRndr(layerSelection, chart, data) {
+    // Set fill for layer.
+    layerSelection.style("fill", chart.C);
+
     // Select the rects, and bind data.
     var rect = layerSelection.selectAll("rect").data(function(d) { return d; });
 
@@ -346,8 +349,21 @@
     }
   }
 
-  function areaRndr(layerSelection, chart, data) {
-    var zeroArea = d3.svg.area()
+  function lineRndr(layerSelection, chart, data) {
+    // Set fill for layer.
+    if (chart.area()) {
+      layerSelection
+        .style("fill", chart.C)
+        .style("stroke", "none")
+        .style("stroke-width", "none");
+    } else {
+      layerSelection.style("fill", chart.C)
+        .style("fill", "none")
+        .style("stroke", chart.C)
+        .style("stroke-width", 2);
+    }
+
+    var areaZero = d3.svg.area()
           .x(chart.X)
           .y0(chart.Y0)
           .y1(chart.Y0);
@@ -357,9 +373,19 @@
           .y0(chart.Y0)
           .y1(chart.Y1);
 
+    var line = d3.svg.line()
+          .x(chart.X)
+          .y(chart.Y);
+
+    var lineZero = d3.svg.line()
+          //.x(chart.xScale(0))
+          .y(chart.yScale(0));
+
     // Select path element (per layer)
     var path = layerSelection.select("path").data(function(d) { return d; });
-    var init = !path.enter().empty(); 
+
+    // If they don't exist, then this is the first time that chart is being rendered.
+    var init = !path.enter().empty();
 
     // PROBLEM:  On initialise, path.enter() is non-empty.
     //           But it will append() to the container, rather than the g.layer
@@ -369,7 +395,7 @@
     if (init) {
       // Path elements do not exist yet, so append them.
       layerSelection.append("path")
-        .attr("d", zeroArea);
+        .attr("d", chart.area() ? areaZero : lineZero);
 
       // reset selection reference (see workround note above)
       path = layerSelection.select("path");
@@ -391,17 +417,18 @@
     }
 
     // Update path
-    path.attr("d", area);
-
+    path.attr("d", chart.area() ? area : line);
   }
 
   function registrationsChart() {
-    return baseChart().render(columnRndr);
+    return baseChart()
+      .render(columnRndr)
+      .stacked(true);
   }
 
   function portfolioChart(){
     return baseChart()
-      .render(areaRndr)
+      .render(lineRndr)
       .stacked(true);  
   }
 
@@ -411,7 +438,7 @@
   eqip.view             = eqip.view || {};
   var ns                = eqip.view.chart = eqip.view.chart || {};
   ns.columnRndr         = columnRndr;
-  ns.areaRndr           = areaRndr;
+  ns.lineRndr           = lineRndr;
   ns.baseChart          = baseChart;
   ns.registrationsChart = registrationsChart;
   ns.portfolioChart     = portfolioChart;

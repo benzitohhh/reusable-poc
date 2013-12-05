@@ -39,21 +39,24 @@ function getFakePatfamsByCompany(bose_pFams, hiwave_pFams) {
 }
 
 
+
+
+
 // ================= CLIENT =============================
-fakeMissingGrantDates(d3.values(eqip.bosePatFams));
-var series               = eqip.model.series,
-    util                 = eqip.model.util,
-    boseClusterToAccNums = eqip.boseClusters,   // SOURCE DATA
-    boseAccNumToPfam     = eqip.bosePatFams,    // SOURCE DATA
-    hiwaveAccNumToPfam   = eqip.hiwavePatFams,  // SOURCE DATA
-    bosePfamsPerCluster  = util.getPfamsPerCluster(boseClusterToAccNums, boseAccNumToPfam),
-    bosePfamsPerNamedCluster = boseClusterToAccNums.reduce(function(acc, d, i) { acc["cluster #" + (i+1)] = bosePfamsPerCluster[i]; return acc; }, {}),
-    boseAllPfams         = bosePfamsPerCluster.reduce(function(acc, d) { // WORKAROUND FOR MISMATCH IN CLUSTER/PAT FILES
-                             acc = acc.concat(d);
-                             return acc;
-                             }, []),
-    pFamsPerCompany      = getFakePatfamsByCompany(
-                             d3.values(boseAccNumToPfam), d3.values(hiwaveAccNumToPfam)); // FAKE DATA
+//fakeMissingGrantDates(d3.values(eqip.bosePatFams));
+var series                    = eqip.model.series,
+    util                      = eqip.model.util,
+    boseClusterToAccNums      = eqip.boseClusters,   // SOURCE DATA
+    boseAccNumToPfam          = eqip.bosePatFams,    // SOURCE DATA
+    hiwaveAccNumToPfam        = eqip.hiwavePatFams,  // SOURCE DATA
+    bosePfamsPerCluster       = util.getPfamsPerCluster(boseClusterToAccNums, boseAccNumToPfam),
+    bosePfamsPerNamedCluster  = boseClusterToAccNums.reduce(function(acc, d, i) { acc["cluster #" + (i+1)] = bosePfamsPerCluster[i]; return acc; }, {}),
+    boseAllPfams              = bosePfamsPerCluster.reduce(function(acc, d) { // WORKAROUND FOR MISMATCH IN CLUSTER/PAT FILES
+                                  acc = acc.concat(d);
+                                  return acc;
+                               }, []),
+    pFamsPerCompany           = getFakePatfamsByCompany(
+                                  d3.values(boseAccNumToPfam), d3.values(hiwaveAccNumToPfam)); // FAKE DATA
 
 // Get models: ANNUAL REGISTRATIONS
 var regs_boseClstr1_byOutcome = series.registrationsPerYearPerOutcome(bosePfamsPerCluster[0] /* cluster 1 */);
@@ -67,68 +70,115 @@ var cuml_bose                 = series.cumlRightsPerYear(boseAllPfams); // singl
 var cuml_bose_byCluster       = series.cumlRightsPerYearPerKey(bosePfamsPerNamedCluster);
 var cuml_bose_byCompany       = series.cumlRightsPerYearPerKey(pFamsPerCompany);
 
-
-// Render charts
+// Chart library
 var chart = eqip.view.chart;
 
-// d3.select("#reg-by-outcome")
-//   .datum(regs_boseClstr1_byOutcome) // bind data
-//   .call(chart.registrationsChart()
-//         .labels(["accepted", "pending", "expired"])
-//         .colors({1: "#f39c12"})
-//         .title("BY OUTCOME: Bose (Cluster #1): Registrations per Year")
-//         .stacked(true)
-//         .transition(true)
-//        );
+function demo1() {
+  // show with fake data!
 
-// d3.select("#reg-by-cluster")
-//   .datum(regs_bose_byCluster) // bind data
-//   .call(chart.registrationsChart()
-//         .labels(d3.keys(regs_bose_byCluster).map(function(d) { return "cluster #" + (+d+1); }))
-//         .colors(["#000000", "#00FF00", "#FF6600", "#3399FF"])
-//         .title("BY CLUSTER: Bose: Registrations per Year")
-//         .stacked(true)
-//         .transition(true)
-//        );
+  d3.select("#reg-by-outcome")
+    .datum(regs_boseClstr1_byOutcome) // bind data
+    .call(chart.registrationsChart()
+          .labels(["accepted", "pending", "expired"])
+          .colors({1: "#f39c12"})
+          .title("BY OUTCOME: Bose (Cluster #1): Registrations per Year")
+          .transition(true)
+          //.stacked(false)
+         );  
+}
 
-// d3.select("#reg-by-company")
-//   .datum(regs_bose_byCompany) // bind data
-//   .call(chart.registrationsChart()
-//         .labels(d3.keys(pFamsPerCompany))
-//         .title("BY COMPANY: Bose & Peers: Registrations per Year")
-//         .stacked(true)
-//         .colors(["#000000", "#00FF00", "#FF6600", "#3399FF", "#0000FF", "#999"])
-//         .transition(true)
-//        );
+function demo2() {
+  // switch off fake data!
 
-// d3.select("#cuml-by-outcome")
-//   .datum(cuml_boseClstr1_byOutcome) // bind data
-//   .call(chart.portfolioChart()
-//         .labels(["granted", "pending"])
-//         //.colors({1: "#f39c12"})
-//         .title("BY STATUS: Bose (Cluster #1): Portfolio")
-//         .transition(true)
-//        );
+  d3.select("#reg-by-company")
+    .datum(regs_bose_byCompany) // bind data
+    .call(chart.registrationsChart()
+          .labels(d3.keys(pFamsPerCompany))
+          .title("BY COMPANY: Bose & Peers: Registrations per Year")
+          .colors(["#000000", "#00FF00", "#FF6600", "#3399FF", "#0000FF", "#999"])
+          .transition(true)
+          // .render(chart.lineRndr)
+          // .stacked(false)
+         );
+}
 
-// d3.select("#cuml-by-cluster")
-//   .datum(cuml_bose_byCluster) // bind data
-//   .call(chart.portfolioChart()
-//         .labels(d3.keys(regs_bose_byCluster).map(function(d) { return "cluster #" + (+d+1); }))
-//         .colors(["#000000", "#00FF00", "#FF6600", "#3399FF"])
-//         .title("BY CLUSTER: Bose: Portfolio")
-//        .transition(true)
-//         // .stackOffset("wiggle")
-//         // .stackOffset("expand")
-//        );
+function demo3() {
+  d3.select("#cuml-by-cluster")
+    .datum(cuml_bose_byCluster) // bind data
+    .call(chart.portfolioChart()
+          .labels(d3.keys(regs_bose_byCluster).map(function(d) { return "cluster #" + (+d+1); }))
+          .colors(["#000000", "#00FF00", "#FF6600", "#3399FF"])
+          .title("BY CLUSTER: Bose: Cumultive rights")
+          .transition(true)
+          .area(false)
+          // .stackOffset("wiggle")
+          // .stackOffset("expand")
+         );  
+}
 
-d3.select("#cuml-by-company")
-  .datum(cuml_bose_byCompany) // bind data
-  .call(chart.portfolioChart()
-        .labels(d3.keys(pFamsPerCompany))
-        .title("BY COMPANY: Bose & Peers: Portfolio")
-        .stacked(true)
-        .colors(["#000000", "#00FF00", "#FF6600", "#3399FF", "#0000FF", "#999"])
-        .transition(true)
-        // .stackOffset("wiggle")
-        // .stackOffset("expand")
-       );
+function demoAll() {
+  d3.select("#reg-by-outcome")
+    .datum(regs_boseClstr1_byOutcome) // bind data
+    .call(chart.registrationsChart()
+          .labels(["accepted", "pending", "expired"])
+          .colors({1: "#f39c12"})
+          .title("BY OUTCOME: Bose (Cluster #1): Registrations per Year")
+          .stacked(true)
+          .transition(true)
+         );
+
+  d3.select("#reg-by-cluster")
+    .datum(regs_bose_byCluster) // bind data
+    .call(chart.registrationsChart()
+          .labels(d3.keys(regs_bose_byCluster).map(function(d) { return "cluster #" + (+d+1); }))
+          .colors(["#000000", "#00FF00", "#FF6600", "#3399FF"])
+          .title("BY CLUSTER: Bose: Registrations per Year")
+          .stacked(true)
+          .transition(true)
+         );
+
+  d3.select("#reg-by-company")
+    .datum(regs_bose_byCompany) // bind data
+    .call(chart.registrationsChart()
+          .labels(d3.keys(pFamsPerCompany))
+          .title("BY COMPANY: Bose & Peers: Registrations per Year")
+          .colors(["#000000", "#00FF00", "#FF6600", "#3399FF", "#0000FF", "#999"])
+          .transition(true)
+          // .render(chart.lineRndr)
+          // .stacked(false)
+         );
+
+  d3.select("#cuml-by-outcome")
+    .datum(cuml_boseClstr1_byOutcome) // bind data
+    .call(chart.portfolioChart()
+          .labels(["granted", "pending"])
+          //.colors({1: "#f39c12"})
+          .title("BY STATUS: Bose (Cluster #1): Portfolio")
+          .area(false)
+          .transition(true)
+         );
+
+  d3.select("#cuml-by-cluster")
+    .datum(cuml_bose_byCluster) // bind data
+    .call(chart.portfolioChart()
+          .labels(d3.keys(regs_bose_byCluster).map(function(d) { return "cluster #" + (+d+1); }))
+          .colors(["#000000", "#00FF00", "#FF6600", "#3399FF"])
+          .title("BY CLUSTER: Bose: Portfolio")
+          .transition(true)
+          // .stackOffset("wiggle")
+          // .stackOffset("expand")
+         );
+
+  d3.select("#cuml-by-company")
+    .datum(cuml_bose_byCompany) // bind data
+    .call(chart.portfolioChart()
+          .labels(d3.keys(pFamsPerCompany))
+          .title("BY COMPANY: Bose & Peers: Portfolio")
+          .stacked(true)
+          .colors(["#000000", "#00FF00", "#FF6600", "#3399FF", "#0000FF", "#999"])
+          .transition(true)
+          // .stackOffset("wiggle")
+          // .stackOffset("expand")
+         );
+  
+}
