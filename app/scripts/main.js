@@ -74,8 +74,10 @@ var cuml_bose_byCompany       = series.cumlRightsPerYearPerKey(pFamsPerCompany);
 var chart = eqip.view.chart;
 
 function demo1() {
-  // show with fake data!
-
+  // 1. COLUMN CHART: STACKED
+  // 2. Show with fake data.
+  // 3. COLUMN CHART: STACKED -> GROUPED
+  // 4. Switch off fake data.
   d3.select("#reg-by-outcome")
     .datum(regs_boseClstr1_byOutcome) // bind data
     .call(chart.registrationsChart()
@@ -88,8 +90,7 @@ function demo1() {
 }
 
 function demo2() {
-  // switch off fake data!
-
+  // COLUMN -> AREA -> LINE
   d3.select("#reg-by-company")
     .datum(regs_bose_byCompany) // bind data
     .call(chart.registrationsChart()
@@ -103,6 +104,7 @@ function demo2() {
 }
 
 function demo3() {
+  // LINE -> AREA -> STREAM -> STREAM_%
   d3.select("#cuml-by-cluster")
     .datum(cuml_bose_byCluster) // bind data
     .call(chart.portfolioChart()
