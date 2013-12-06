@@ -1,5 +1,5 @@
-  // see http://bost.ocks.org/mike/chart/
-  // BASICALLY: implement reusable components as closures with getter-setter methods
+// see http://bost.ocks.org/mike/chart/
+// BASICALLY: implement reusable components as closures with getter-setter methods
 
 (function() {
 
@@ -37,9 +37,9 @@
         stack        = d3.layout.stack()
           .x(function(d) { return d[0]; })
           .y(function(d) { return d[1]; }),
-        render_data  = function() {},
-        updateXScaleAndXAxis = function() {}
-;
+        render_data  = function(layer, chart, data) {},
+        updateXScaleAndXAxis = function(chart, data) {},
+        updateYScaleAndYAxis = function(chart, data) {};
 
     function chart(selection) {
       selection.each(function(data) {
@@ -60,14 +60,8 @@
         // Update the x-scale (and set attributes on the x-axis).
         updateXScaleAndXAxis(chart, data);
 
-        // Update the y-scale (and set attributes on the y-axis)
-        var data_flat = util.flatten(data);
-        var maxY = d3.max(data_flat, function(d) { return stacked ? d.y0 + d.y : d[1]; }); 
-        yScale
-          .domain([0, maxY])
-          .rangeRound([height, 0]);
-        var yTicks = yScale.ticks().filter(function(d, i) { return d % 1 === 0; }); // remove non-integers
-        yAxis.tickValues(yTicks);
+        // Update the y-scale (and set attributes on the y-axis).
+        updateYScaleAndYAxis(chart, data);
 
         if (stacked) {
           // Now that axes and scales have been set (including min/max stack values),
@@ -264,6 +258,11 @@
     chart.updateXScaleAndXAxis = function(_) {
       if (!arguments.length) return updateXScaleAndXAxis;
       updateXScaleAndXAxis = _;
+      return chart;
+    };
+    chart.updateYScaleAndYAxis = function(_) {
+      if (!arguments.length) return updateYScaleAndYAxis;
+      updateYScaleAndYAxis = _;
       return chart;
     };
     chart.xAxis = function(_) {
@@ -507,10 +506,24 @@
       .domain(xDomain);
   };
 
+  /**
+   * Y Scale/Axis for numeric values, vertical.
+   */
+  var updateYScaleAndYAxis_vals_vertical = function(chart, data) {
+    var data_flat = util.flatten(data);
+    var maxY = d3.max(data_flat, function(d) { return chart.stacked() ? d.y0 + d.y : d[1]; }); 
+    chart.yScale
+      .domain([0, maxY])
+      .rangeRound([chart.height(), 0]);
+    var yTicks = chart.yScale.ticks().filter(function(d, i) { return d % 1 === 0; }); // remove non-integers
+    chart.yAxis().tickValues(yTicks);
+  };
+
   function registrationsChart() {
     return baseChart()
       .render_data(render_data_column)
       .updateXScaleAndXAxis(updateXScaleAndXAxis_years)
+      .updateYScaleAndYAxis(updateYScaleAndYAxis_vals_vertical)
       .stacked(true);
   }
 
@@ -518,6 +531,7 @@
     return baseChart()
       .render_data(render_data_line)
       .updateXScaleAndXAxis(updateXScaleAndXAxis_years)
+      .updateYScaleAndYAxis(updateYScaleAndYAxis_vals_vertical)
       .stacked(true);  
   }
 
@@ -525,6 +539,7 @@
     return baseChart()
       .render_data(render_data_column)
       .updateXScaleAndXAxis(updateXScaleAndXAxis_ordinals)
+      .updateYScaleAndYAxis(updateYScaleAndYAxis_vals_vertical)
       .stacked(true);  
   }
 
