@@ -1,7 +1,4 @@
 (function() {
-  var eqip   = this.eqip || {};
-  eqip.model = eqip.model || {};
-  var ns = eqip.model.series = eqip.model.series || {};
 
   var T_GROUPS = ["APAC", "EUROPE", "USA", "OTHER"];
 
@@ -231,6 +228,9 @@
   }
 
   // export
+  var eqip   = this.eqip || {};
+  eqip.model = eqip.model || {};
+  var ns = eqip.model.series = eqip.model.series || {};
   ns.registrationsPerYearPerOutcome = registrationsPerYearPerOutcome;
   ns.registrationsPerYear           = registrationsPerYear;
   ns.registrationsPerYearPerKey     = registrationsPerYearPerKey;

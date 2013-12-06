@@ -1,9 +1,6 @@
 (function() {
-  var eqip   = this.eqip || {};
-  eqip.model = eqip.model || {};
-  var ns = eqip.model.static = eqip.model.static || {};
 
-  ns.terrToTGroup = {
+  var terrToTGroup = {
     "ad":     "EUROPE",
     // "ae":     "United Arab Emirates",
     // "af":     "Afghanistan, Islamic State of",
@@ -270,7 +267,7 @@
     // "wo":     "World Intellectual Property Organization"
   };
 
-  ns.terrToName = {
+  var terrToName = {
     "ad":     "Andorra, Principality of",
     "ae":     "United Arab Emirates",
     "af":     "Afghanistan, Islamic State of",
@@ -537,7 +534,7 @@
     "wo":     "World Intellectual Property Organization"
   };
 
-  ns.ipcToName = {
+  var ipcToName = {
     "A01B": "SOIL WORKING IN AGRICULTURE OR FORESTRY; PARTS, DETAILS, OR ACCESSORIES OF AGRICULTURAL MACHINES OR IMPLEMENTS, IN GENERAL",
     "A01C": "PLANTING; SOWING; FERTILISING",
     "A01D": "HARVESTING; MOWING",
@@ -1176,5 +1173,13 @@
     "H05K": "PRINTED CIRCUITS; CASINGS OR CONSTRUCTIONAL DETAILS OF ELECTRIC APPARATUS; MANUFACTURE OF ASSEMBLAGES OF ELECTRICAL COMPONENTS ;",
     "H99Z": "SUBJECT MATTER NOT OTHERWISE PROVIDED FOR IN THIS SECTION"
   };
+
+  // export
+  var eqip   = this.eqip || {};
+  eqip.model = eqip.model || {};
+  var ns = eqip.model.static = eqip.model.static || {};
+  ns.terrToTGroup = terrToTGroup;
+  ns.terrToName = terrToName;
+  ns.ipcToName = ipcToName;
 
 })();

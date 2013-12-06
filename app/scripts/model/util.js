@@ -1,10 +1,7 @@
 (function() {
-  var eqip   = this.eqip || {};
-  eqip.model = eqip.model || {};
-  var util = eqip.model.util = eqip.model.util || {};
 
   // Given array of clusters, returns an array of (array of patFams).
-  util.getPfamsPerCluster = function(clusters, accNumToPFam) {
+  function getPfamsPerCluster(clusters, accNumToPFam) {
     return clusters.map(function(cluster) {
       return cluster.members.map(function(accNum) {
         var p = accNumToPFam[accNum];
@@ -13,4 +10,11 @@
       }).filter(function(p) { return p != null; });
     });
   };
+
+  // export
+  var eqip   = this.eqip || {};
+  eqip.model = eqip.model || {};
+  var util = eqip.model.util = eqip.model.util || {};
+  util.getPfamsPerCluster = getPfamsPerCluster;
+
 })();
