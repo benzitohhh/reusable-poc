@@ -73,23 +73,26 @@ var cuml_bose                 = series.cumlRightsPerYear(boseAllPfams); // singl
 var cuml_bose_byCluster       = series.cumlRightsPerYearPerKey(bosePfamsPerNamedCluster);
 var cuml_bose_byCompany       = series.cumlRightsPerYearPerKey(pFamsPerCompany);
 
-// Get models: TERRITORIES
-var tGroups_boseClstr1     = series.rightsPerTerrGroup(terrToTGroup, bosePfamsPerCluster[0]); // limits each tGroup to one count per pFam.
-var terrs_boseClstr1_EU    = series.rightsPerTerritory(terrToTGroup, bosePfamsPerCluster[0], "EUROPE"); // single pFam can be in multiple territories
-var terrs_boseClstr1_USA   = series.rightsPerTerritory(terrToTGroup, bosePfamsPerCluster[0], "USA");
-var terrs_boseClstr1_APAC  = series.rightsPerTerritory(terrToTGroup, bosePfamsPerCluster[0], "APAC");
-var terrs_boseClstr1_OTHER = series.rightsPerTerritory(terrToTGroup, bosePfamsPerCluster[0], "OTHER");
-var tGroups_bose_byCluster = series.rightsPerTerrGroupPerKey(terrToTGroup, bosePfamsPerNamedCluster);
-// var terrs_bose_EU_byCluster  = series.cumlRightsPerYearPerKey(pFamsPerCompany);
-// var terrs_bose_USA_byCluster = series.cumlRightsPerYearPerKey(pFamsPerCompany);
-var tGroups_bose_byCompany   = series.rightsPerTerrGroupPerKey(terrToTGroup, pFamsPerCompany);
-// var terrs_bose_EU_byCompany  = series.cumlRightsPerYearPerKey(pFamsPerCompany);
-// var terrs_bose_USA_byCompany = series.cumlRightsPerYearPerKey(pFamsPerCompany);
-
-
-// Chart library
-
-
+// Get models: TERRITORIES (single series)
+var tGroups_boseClstr1         = series.rightsPerTerrGroup(terrToTGroup, bosePfamsPerCluster[0]); // limits each tGroup to one count per pFam.
+var terrs_boseClstr1_EU        = series.rightsPerTerritory(terrToTGroup, bosePfamsPerCluster[0], "EUROPE"); // single pFam can be in multiple territories
+var terrs_boseClstr1_USA       = series.rightsPerTerritory(terrToTGroup, bosePfamsPerCluster[0], "USA");
+var terrs_boseClstr1_APAC      = series.rightsPerTerritory(terrToTGroup, bosePfamsPerCluster[0], "APAC");
+var terrs_boseClstr1_OTHER     = series.rightsPerTerritory(terrToTGroup, bosePfamsPerCluster[0], "OTHER");
+var terrs_boseClstr1_ALL       = series.rightsPerTerritory(terrToTGroup, bosePfamsPerCluster[0]); // no arg means "all" tGroups
+// Get models: TERRITORIES (multi series)
+var tGroups_bose_byCluster     = series.rightsPerTerrGroupPerKey(terrToTGroup, bosePfamsPerNamedCluster);
+var terrs_bose_EU_byCluster    = series.rightsPerTerritoryPerKey(terrToTGroup, bosePfamsPerNamedCluster, "EUROPE");
+var terrs_bose_USA_byCluster   = series.rightsPerTerritoryPerKey(terrToTGroup, bosePfamsPerNamedCluster, "USA");
+var terrs_bose_APAC_byCluster  = series.rightsPerTerritoryPerKey(terrToTGroup, bosePfamsPerNamedCluster, "APAC");
+var terrs_bose_OTHER_byCluster = series.rightsPerTerritoryPerKey(terrToTGroup, bosePfamsPerNamedCluster, "OTHER");
+var terrs_bose_ALL_byCluster   = series.rightsPerTerritoryPerKey(terrToTGroup, bosePfamsPerNamedCluster); // no arg means "all" tGroups
+var tGroups_bose_byCompany     = series.rightsPerTerrGroupPerKey(terrToTGroup, pFamsPerCompany);
+var terrs_bose_EU_byCompany    = series.rightsPerTerritoryPerKey(terrToTGroup, pFamsPerCompany, "EUROPE");
+var terrs_bose_USA_byCompany   = series.rightsPerTerritoryPerKey(terrToTGroup, pFamsPerCompany, "USA");
+var terrs_bose_APAC_byCompany  = series.rightsPerTerritoryPerKey(terrToTGroup, pFamsPerCompany, "APAC");
+var terrs_bose_OTHER_byCompany = series.rightsPerTerritoryPerKey(terrToTGroup, pFamsPerCompany, "OTHER");
+var terrs_bose_ALL_byCompany   = series.rightsPerTerritoryPerKey(terrToTGroup, pFamsPerCompany, "ALL"); // no arg means "all" tGroups
 
 
 //=========== DEMOS ===========

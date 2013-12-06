@@ -202,8 +202,10 @@
       p.territories
         .filter(function(t) { // only count the territories we are interested in...
           t = t.toLowerCase();
-          if (tGroup != "OTHER") {
-            return terrToTGroup[t] == tGroup;
+          if (tGroup == null || tGroup == undefined) {
+            return true; // no tGroup specified, so we are interested in all territories.
+          } else if (tGroup != "OTHER") {
+            return terrToTGroup[t] == tGroup; // tGroup specified, so filter.
           } else {
             // tGroup is "OTHER", so we are interested in territories that are missing from the terrToTGroup map.
             return !d3.set(T_GROUPS).has(terrToTGroup[t]);
@@ -218,5 +220,11 @@
   /**
    * Returns (key -> (territory -> freq)).
    */
-  ns.rightsPerTerritoryPerKey = function(terrToTGroup, keyToPfams, tGroup) {};
+  ns.rightsPerTerritoryPerKey = function(terrToTGroup, keyToPfams, tGroup) {
+    var countsPerTerrPerKey = d3.values(keyToPfams).map(function(pFams) {
+      return ns.rightsPerTerritory(terrToTGroup, pFams, tGroup);
+    });
+    var terrSet = countsPerTerrPerKey.reduce(function(acc, d) { acc = $.extend(acc, d); return acc; }, {});
+    return getAsStackableSeries(countsPerTerrPerKey, d3.keys(terrSet));    
+  };
 })();
