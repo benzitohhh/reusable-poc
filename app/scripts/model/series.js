@@ -1,7 +1,9 @@
 (function() {
   var eqip   = this.eqip || {};
   eqip.model = eqip.model || {};
-  var series = eqip.model.series = eqip.model.series || {};
+  var ns = eqip.model.series = eqip.model.series || {};
+
+  var T_GROUPS = ["APAC", "EUROPE", "USA", "OTHER"];
 
   function getRgCountsPerYear(pFams) {
     // Returns histogram of patent registrations: (year -> freq)
@@ -53,7 +55,7 @@
   /**
    * Returns (outcome -> (year -> freq)).
    */
-  series.registrationsPerYearPerOutcome = function(pFams) {
+  ns.registrationsPerYearPerOutcome = function(pFams) {
     // Construct histograms: outcome -> (year -> freq)
     var countsPerOc  = {"grant":{}, "priority":{}, "priority_accepted":{}, "priority_pending":{}, "priority_expired":{} },
         yearsSet     = {},
@@ -95,7 +97,7 @@
   /**
    * Return (year -> freq), as a single series.
    */
-  series.registrationsPerYear = function(pFams) {
+  ns.registrationsPerYear = function(pFams) {
     var counts = getRgCountsPerYear(pFams);       // histogram
     var years  = getYearRange(counts);            // Calculate x domain (range of years)
     return getAsStackableSeries([counts], years); // Transform to series
@@ -104,7 +106,7 @@
   /**
    * Returns (key -> (year -> freq)).
    */
-  series.registrationsPerYearPerKey = function(keyToPfams) {
+  ns.registrationsPerYearPerKey = function(keyToPfams) {
     var countsPerKey = d3.values(keyToPfams).map(getRgCountsPerYear); // histograms
     var yearMap      = countsPerKey.reduce(function(acc, d) { return $.extend(acc, d); }, {});
     var years        = getYearRange(yearMap); // Calculate x domain (range of years)
@@ -114,7 +116,7 @@
   /**
    * Returns (outcome -> (year -> freq)).
    */
-  series.cumlRightsPerYearPerOutcome = function(pFams) {
+  ns.cumlRightsPerYearPerOutcome = function(pFams) {
     // Construct histograms: outcome -> (year -> freq)
     var countsPerOc  = { "grant":{}, "priority_pending":{} },
         yearsSet     = {},
@@ -150,9 +152,9 @@
   };
 
   /**
-   * Return (year -> freq).
+   * Returns (year -> freq).
    */
-  series.cumlRightsPerYear = function(pFams) {
+  ns.cumlRightsPerYear = function(pFams) {
     var counts = getCumlRgAcceptedCountsPerYear(pFams); // Histogram
     var years  = getYearRange(counts);                  // Calculate x domain (range of years)
     return getAsStackableSeries([counts], years);       // Transform to series
@@ -161,22 +163,58 @@
   /**
    * Returns (key -> (year -> freq)).
    */
-  series.cumlRightsPerYearPerKey = function(keyToPfams) {
+  ns.cumlRightsPerYearPerKey = function(keyToPfams) {
     var countsPerKey = d3.values(keyToPfams).map(getCumlRgAcceptedCountsPerYear); // histograms
     var yearMap      = countsPerKey.reduce(function(acc, d) { return $.extend(acc, d); }, {});
     var years        = getYearRange(yearMap); // Calculate x domain (range of years)
     return getAsStackableSeries(countsPerKey, years); // Transform to series
   };
 
-  // Returns (terrGroup -> freq).
-  series.rightsPerTerrGroup = function() {};
+  /**
+   * Returns (terrGroup -> freq).
+   */
+  ns.rightsPerTerrGroup = function(terrToTGroup, pFams) {
+    // Count by territory group
+    var tGroups = pFams.map(function(p) { // for each pFam, get array of tGroups
+      return p.territories.map(function(t) { t = t.toLowerCase(); return terrToTGroup[t] ? terrToTGroup[t] : "OTHER"; });
+    });
+    var count_init = T_GROUPS.reduce(function(acc, d) { acc[d] = 0; return acc; }, {});
+    var count = tGroups.reduce(function(acc, pTerrs) { // Limit each group to one count per pFam, using a d3 Set.
+      T_GROUPS.forEach(function(t) { if (d3.set(pTerrs).has(t)) acc[t]++; });
+      return acc;
+    }, count_init);
+    return count;
+  };
 
-  // Returns (key ->(terrGroup -> freq)).
-  series.rightsPerTerrGroupPerKey = function() {};
+  /**
+   * Returns (key ->(terrGroup -> freq)).
+   */
+  ns.rightsPerTerrGroupPerKey = function(terrToTGroup, keyToPfams) {};
 
-  // Returns (territory -> freq).
-  series.rightsPerTerritory = function() {};
+  /**
+   * Returns (territory -> freq).
+   */
+  ns.rightsPerTerritory = function(terrToTGroup, pFams, tGroup) {
+    // Count by territories within the given tGroup
+    var count = pFams.reduce(function(acc, p) {
+      p.territories
+        .filter(function(t) { // only count the territories we are interested in...
+          t = t.toLowerCase();
+          if (tGroup != "OTHER") {
+            return terrToTGroup[t] == tGroup;
+          } else {
+            // tGroup is "OTHER", so we are interested in territories that are missing from the terrToTGroup map.
+            return !d3.set(T_GROUPS).has(terrToTGroup[t]);
+          }
+        })
+        .forEach(function(t) { acc[t] = acc[t] ? acc[t] + 1 : 1; });
+      return acc;
+    }, {});    
+    return count;
+  };
 
-  // Returns (key -> (territory -> freq)).
-  series.rightsPerTerritoryPerKey = function() {};
+  /**
+   * Returns (key -> (territory -> freq)).
+   */
+  ns.rightsPerTerritoryPerKey = function(terrToTGroup, keyToPfams, tGroup) {};
 })();

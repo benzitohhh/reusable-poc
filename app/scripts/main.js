@@ -46,6 +46,9 @@ function getFakePatfamsByCompany(bose_pFams, hiwave_pFams) {
 fakeMissingGrantDates(d3.values(eqip.bosePatFams));
 var series                    = eqip.model.series,
     util                      = eqip.model.util,
+    chart                     = eqip.view.chart,
+    refData                   = eqip.model.static,
+    terrToTGroup              = refData.terrToTGroup,
     boseClusterToAccNums      = eqip.boseClusters,   // SOURCE DATA
     boseAccNumToPfam          = eqip.bosePatFams,    // SOURCE DATA
     hiwaveAccNumToPfam        = eqip.hiwavePatFams,  // SOURCE DATA
@@ -70,8 +73,22 @@ var cuml_bose                 = series.cumlRightsPerYear(boseAllPfams); // singl
 var cuml_bose_byCluster       = series.cumlRightsPerYearPerKey(bosePfamsPerNamedCluster);
 var cuml_bose_byCompany       = series.cumlRightsPerYearPerKey(pFamsPerCompany);
 
+// Get models: TERRITORIES
+var tGroups_boseClstr1     = series.rightsPerTerrGroup(terrToTGroup, bosePfamsPerCluster[0]); // limits each tGroup to one count per pFam.
+var terrs_boseClstr1_EU    = series.rightsPerTerritory(terrToTGroup, bosePfamsPerCluster[0], "EUROPE"); // single pFam can be in multiple territories
+var terrs_boseClstr1_USA   = series.rightsPerTerritory(terrToTGroup, bosePfamsPerCluster[0], "USA");
+var terrs_boseClstr1_APAC  = series.rightsPerTerritory(terrToTGroup, bosePfamsPerCluster[0], "APAC");
+var terrs_boseClstr1_OTHER = series.rightsPerTerritory(terrToTGroup, bosePfamsPerCluster[0], "OTHER");
+var tGroups_bose_byCluster = series.rightsPerTerrGroupPerKey(terrToTGroup, bosePfamsPerNamedCluster);
+// var terrs_bose_EU_byCluster  = series.cumlRightsPerYearPerKey(pFamsPerCompany);
+// var terrs_bose_USA_byCluster = series.cumlRightsPerYearPerKey(pFamsPerCompany);
+// var tGroups_bose_byCompany   = series.cumlRightsPerYearPerKey(bosePfamsPerNamedCluster);
+// var terrs_bose_EU_byCompany  = series.cumlRightsPerYearPerKey(pFamsPerCompany);
+// var terrs_bose_USA_byCompany = series.cumlRightsPerYearPerKey(pFamsPerCompany);
+
+
 // Chart library
-var chart = eqip.view.chart;
+
 
 
 
@@ -109,7 +126,7 @@ function demo2() {
          );
 }
 
-demoAll()
+
 function demoAll() {
   d3.select("#reg-by-outcome")
     .datum(regs_boseClstr1_byOutcome) // bind data
