@@ -34,7 +34,7 @@
         stack        = d3.layout.stack()
           .x(function(d) { return d[0]; })
           .y(function(d) { return d[1]; }),
-        render       = function() {};
+        render_data       = function() {};
 
     function chart(selection) {
       selection.each(function(data) {
@@ -55,7 +55,10 @@
         // Flat data (useful for finding max/min)
         var data_flat = data.reduce(function(acc, d) { return acc.concat(d); }, []);
 
-        // Update the x-scale.
+
+        
+        //============= TEMP: start of f:updateXScaleAndXAxis ===============
+        // Update the x-scale (and set attributes on the x-axis).
         var xExt    = d3.extent(data_flat, function(d) { return d[0]; }); // BEN: d3.extent gets max/min in array
         var xDomain = d3.range(xExt[0], xExt[1] + 1);
         xScale
@@ -71,8 +74,9 @@
           // Use less padding (otherwise bars will be too narrow)
           xScale.rangeRoundBands([0, width], 0.1);
         }
+        //============= TEMP: /end of f:updateXScaleAndXAxis ===============
 
-        // Update the y-scale.
+        // Update the y-scale (and set attributes on the y-axis)
         var maxY = d3.max(data_flat, function(d) { return stacked ? d.y0 + d.y : d[1]; }); 
         yScale
           .domain([0, maxY])
@@ -167,8 +171,8 @@
         layer.enter().append("g")
           .attr("class", "layer");
 
-        // Render
-        render(layer, chart, data);
+        // Render data
+        render_data(layer, chart, data);
       });
     }
 
@@ -201,7 +205,7 @@
       yAxis.tickFormat("");
     } 
 
-    // Public functions (exposed for use in render etc...)
+    // Public functions (exposed for use in renders etc...)
     chart.X  = X;
     chart.Y  = Y;
     chart.Y0 = Y0;
@@ -211,7 +215,7 @@
     chart.yScale = yScale;
 
     // Getter/Setters (return chart, which is convenient for chaining)
-    // These are used internally (i.e. within render function) AND externally (chaining).
+    // These are used internally (i.e. within renders) AND externally (chaining).
     chart.margin = function(_) {
       if (!arguments.length) return margin;
       margin = _;
@@ -267,9 +271,9 @@
       stacked = _;
       return chart;
     };
-    chart.render = function(_) {
-      if (!arguments.length) return render;
-      render = _;
+    chart.render_data = function(_) {
+      if (!arguments.length) return render_data;
+      render_data = _;
       return chart;
     };
     chart.xAxis = function(_) {
@@ -290,17 +294,17 @@
     
     // Setters (not getters). Sets val regardless of whether args provided or not.
     chart.column = function() { 
-      render = columnRndr;
+      render_data = render_data_column;
       return chart;
     };    
     chart.area = function() { 
       stacked = true;
-      render = lineRndr;
+      render_data = render_data_line;
       return chart;
     };
     chart.line = function() { 
       stacked = false;
-      render = lineRndr;
+      render_data = render_data_line;
       return chart;
     };    
     chart.stack = function() { 
@@ -349,7 +353,7 @@
   /**
    * Renders rects for column charts (both stacked and grouped).
    */
-  function columnRndr(layerSelection, chart, data) {
+  function render_data_column(layerSelection, chart, data) {
     // Set fill for layer.
     layerSelection.style("fill", chart.C);
 
@@ -411,7 +415,7 @@
   /**
    * Renders path for Line and Area charts (including stream charts).
    */
-  function lineRndr(layerSelection, chart, data) {
+  function render_data_line(layerSelection, chart, data) {
     // Set fill for layer.
     if (chart.stacked()) {
       layerSelection
@@ -484,13 +488,13 @@
 
   function registrationsChart() {
     return baseChart()
-      .render(columnRndr)
+      .render_data(render_data_column)
       .stacked(true);
   }
 
   function portfolioChart(){
     return baseChart()
-      .render(lineRndr)
+      .render_data(render_data_line)
       .stacked(true);  
   }
 
@@ -498,8 +502,6 @@
   var eqip              = this.eqip || {};
   eqip.view             = eqip.view || {};
   var ns                = eqip.view.chart = eqip.view.chart || {};
-  ns.columnRndr         = columnRndr;
-  ns.lineRndr           = lineRndr;
   ns.baseChart          = baseChart;
   ns.registrationsChart = registrationsChart;
   ns.portfolioChart     = portfolioChart;

@@ -74,12 +74,12 @@ var cuml_bose_byCluster       = series.cumlRightsPerYearPerKey(bosePfamsPerNamed
 var cuml_bose_byCompany       = series.cumlRightsPerYearPerKey(pFamsPerCompany);
 
 // Get models: TERRITORIES (single series)
-var tGroups_boseClstr1         = series.rightsPerTerrGroup(terrToTGroup, bosePfamsPerCluster[0]); // limits each tGroup to one count per pFam.
-var terrs_boseClstr1_EU        = series.rightsPerTerritory(terrToTGroup, bosePfamsPerCluster[0], "EUROPE"); // single pFam can be in multiple territories
-var terrs_boseClstr1_USA       = series.rightsPerTerritory(terrToTGroup, bosePfamsPerCluster[0], "USA");
-var terrs_boseClstr1_APAC      = series.rightsPerTerritory(terrToTGroup, bosePfamsPerCluster[0], "APAC");
-var terrs_boseClstr1_OTHER     = series.rightsPerTerritory(terrToTGroup, bosePfamsPerCluster[0], "OTHER");
-var terrs_boseClstr1_ALL       = series.rightsPerTerritory(terrToTGroup, bosePfamsPerCluster[0]); // no arg means "all" tGroups
+var tGroups_boseClstr1         = series.rightsPerTerrGroupPerKey(terrToTGroup, [bosePfamsPerCluster[0]]); // limits each tGroup to one count per pFam.
+var terrs_boseClstr1_EU        = series.rightsPerTerritoryPerKey(terrToTGroup, [bosePfamsPerCluster[0]], "EUROPE"); // single pFam can be in multiple territories
+var terrs_boseClstr1_USA       = series.rightsPerTerritoryPerKey(terrToTGroup, [bosePfamsPerCluster[0]], "USA");
+var terrs_boseClstr1_APAC      = series.rightsPerTerritoryPerKey(terrToTGroup, [bosePfamsPerCluster[0]], "APAC");
+var terrs_boseClstr1_OTHER     = series.rightsPerTerritoryPerKey(terrToTGroup, [bosePfamsPerCluster[0]], "OTHER");
+var terrs_boseClstr1_ALL       = series.rightsPerTerritoryPerKey(terrToTGroup, [bosePfamsPerCluster[0]]); // no arg means "all" tGroups
 // Get models: TERRITORIES (multi series)
 var tGroups_bose_byCluster     = series.rightsPerTerrGroupPerKey(terrToTGroup, bosePfamsPerNamedCluster);
 var terrs_bose_EU_byCluster    = series.rightsPerTerritoryPerKey(terrToTGroup, bosePfamsPerNamedCluster, "EUROPE");
@@ -129,6 +129,20 @@ function demo2() {
          );
 }
 
+//demo3();
+demoAll()
+function demo3() {
+  // territory charts (bar charts)
+  // TODO: add to demoAll()
+  d3.select("#tGroups-boseClstr1")
+    .datum(tGroups_boseClstr1) // bind data
+    .call(chart.registrationsChart()
+          // Single series, so no labels or colors needed
+          .title("Bose Cluster #1: Rights per Territory-Group")
+          //.transition(true)
+         );
+  
+}
 
 function demoAll() {
   d3.select("#reg-by-outcome")
