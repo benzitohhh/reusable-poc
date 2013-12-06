@@ -189,7 +189,9 @@
   /**
    * Returns (key ->(terrGroup -> freq)).
    */
-  ns.rightsPerTerrGroupPerKey = function(terrToTGroup, keyToPfams) {};
+  ns.rightsPerTerrGroupPerKey = function(terrToTGroup, keyToPfams) {
+    return d3.values(keyToPfams).map(function(pFams) { return ns.rightsPerTerrGroup(terrToTGroup, pFams); });
+  };
 
   /**
    * Returns (territory -> freq).

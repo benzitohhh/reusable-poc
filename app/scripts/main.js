@@ -82,7 +82,7 @@ var terrs_boseClstr1_OTHER = series.rightsPerTerritory(terrToTGroup, bosePfamsPe
 var tGroups_bose_byCluster = series.rightsPerTerrGroupPerKey(terrToTGroup, bosePfamsPerNamedCluster);
 // var terrs_bose_EU_byCluster  = series.cumlRightsPerYearPerKey(pFamsPerCompany);
 // var terrs_bose_USA_byCluster = series.cumlRightsPerYearPerKey(pFamsPerCompany);
-// var tGroups_bose_byCompany   = series.cumlRightsPerYearPerKey(bosePfamsPerNamedCluster);
+var tGroups_bose_byCompany   = series.rightsPerTerrGroupPerKey(terrToTGroup, pFamsPerCompany);
 // var terrs_bose_EU_byCompany  = series.cumlRightsPerYearPerKey(pFamsPerCompany);
 // var terrs_bose_USA_byCompany = series.cumlRightsPerYearPerKey(pFamsPerCompany);
 
