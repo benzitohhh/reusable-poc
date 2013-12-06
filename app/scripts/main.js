@@ -96,7 +96,7 @@ var terrs_bose_ALL_byCompany   = series.rightsPerTerritoryPerKey(terrToTGroup, p
 
 
 //=========== DEMOS ===========
-demo1()
+//demo1()
 function demo1() {
   // 1. COLUMN CHART: STACKED
   // 2. Show with fake data.
@@ -130,13 +130,13 @@ function demo2() {
          );
 }
 
-//demo3();
+demo3();
 function demo3() {
   // territory charts (bar charts)
   // TODO: add to demoAll()
   d3.select("#tGroups-boseClstr1")
     .datum(tGroups_boseClstr1) // bind data
-    .call(chart.registrationsChart()
+    .call(chart.territoriesChart()
           // Single series, so no labels or colors needed
           .title("Bose Cluster #1: Rights per Territory-Group")
           //.transition(true)

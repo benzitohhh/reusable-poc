@@ -498,6 +498,15 @@
     }
   };
 
+  /**
+   * x Scale/Axis for ordinals.
+   */
+  var updateXScaleAndXAxis_ordinals = function(chart, data) {
+    var xDomain = data[0].map(function(d) { return d[0]; });
+    chart.xScale
+      .domain(xDomain);
+  };
+
   function registrationsChart() {
     return baseChart()
       .render_data(render_data_column)
@@ -508,6 +517,14 @@
   function portfolioChart(){
     return baseChart()
       .render_data(render_data_line)
+      .updateXScaleAndXAxis(updateXScaleAndXAxis_years)
+      .stacked(true);  
+  }
+
+  function territoriesChart(){
+    return baseChart()
+      .render_data(render_data_column)
+      .updateXScaleAndXAxis(updateXScaleAndXAxis_ordinals)
       .stacked(true);  
   }
 
@@ -518,6 +535,7 @@
   ns.baseChart          = baseChart;
   ns.registrationsChart = registrationsChart;
   ns.portfolioChart     = portfolioChart;
+  ns.territoriesChart   = territoriesChart;
 
 })();
 
