@@ -45,7 +45,7 @@ function getFakePatfamsByCompany(bose_pFams, hiwave_pFams) {
 // ================= CLIENT =============================
 fakeMissingGrantDates(d3.values(eqip.bosePatFams));
 var series                    = eqip.model.series,
-    util                      = eqip.model.util,
+    util                      = eqip.util.util,
     chart                     = eqip.view.chart,
     refData                   = eqip.model.static,
     terrToTGroup              = refData.terrToTGroup,
@@ -96,6 +96,7 @@ var terrs_bose_ALL_byCompany   = series.rightsPerTerritoryPerKey(terrToTGroup, p
 
 
 //=========== DEMOS ===========
+demo1()
 function demo1() {
   // 1. COLUMN CHART: STACKED
   // 2. Show with fake data.
@@ -130,7 +131,6 @@ function demo2() {
 }
 
 //demo3();
-demoAll()
 function demo3() {
   // territory charts (bar charts)
   // TODO: add to demoAll()

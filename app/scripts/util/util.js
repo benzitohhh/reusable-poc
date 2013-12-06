@@ -11,10 +11,16 @@
     });
   };
 
+  // Given array of arrays, returns single "flat" array
+  function flatten(arr){
+    return arr.reduce(function(acc, d) { return acc.concat(d); }, []);
+  }
+
   // export
-  var eqip   = this.eqip || {};
-  eqip.model = eqip.model || {};
-  var util = eqip.model.util = eqip.model.util || {};
+  var eqip                = this.eqip || {};
+  eqip.util               = eqip.util || {};
+  var util                = eqip.util.util = eqip.util.util || {};
   util.getPfamsPerCluster = getPfamsPerCluster;
+  util.flatten            = flatten;
 
 })();

@@ -3,6 +3,9 @@
 
 (function() {
 
+  // import utils
+  var util = window.eqip.util.util; // TODO: clean this up!
+
   function baseChart() {
     var margin       = {top: 40, right: 150, bottom: 30, left: 40},
         width        = 600 - margin.left - margin.right,
@@ -34,7 +37,9 @@
         stack        = d3.layout.stack()
           .x(function(d) { return d[0]; })
           .y(function(d) { return d[1]; }),
-        render_data       = function() {};
+        render_data  = function() {},
+        updateXScaleAndXAxis = function() {}
+;
 
     function chart(selection) {
       selection.each(function(data) {
@@ -52,31 +57,11 @@
           data = stack(data); // Add y0 (baseline)
         }
 
-        // Flat data (useful for finding max/min)
-        var data_flat = data.reduce(function(acc, d) { return acc.concat(d); }, []);
-
-
-        
-        //============= TEMP: start of f:updateXScaleAndXAxis ===============
         // Update the x-scale (and set attributes on the x-axis).
-        var xExt    = d3.extent(data_flat, function(d) { return d[0]; }); // BEN: d3.extent gets max/min in array
-        var xDomain = d3.range(xExt[0], xExt[1] + 1);
-        xScale
-          .domain(xDomain)
-          .rangeRoundBands([0, width], 0.5);
-        if (xDomain.length > 10) {
-          // Restrict number of x-axis ticks, to ensure that year labels do not overlap.
-          // In general, we only have space for approximately 10 labels
-          var divisor  = Math.ceil(xDomain.length / 10);
-          var startIdx = xDomain[0] % 5 ? (5 - xDomain[0] % 5) : 0; // first index whose val is a multiple of 5
-          var subset   = xDomain.filter(function(d, i) { return (i - startIdx) % divisor == 0; });
-          xAxis.tickValues(subset);
-          // Use less padding (otherwise bars will be too narrow)
-          xScale.rangeRoundBands([0, width], 0.1);
-        }
-        //============= TEMP: /end of f:updateXScaleAndXAxis ===============
+        updateXScaleAndXAxis(chart, data);
 
         // Update the y-scale (and set attributes on the y-axis)
+        var data_flat = util.flatten(data);
         var maxY = d3.max(data_flat, function(d) { return stacked ? d.y0 + d.y : d[1]; }); 
         yScale
           .domain([0, maxY])
@@ -274,6 +259,11 @@
     chart.render_data = function(_) {
       if (!arguments.length) return render_data;
       render_data = _;
+      return chart;
+    };
+    chart.updateXScaleAndXAxis = function(_) {
+      if (!arguments.length) return updateXScaleAndXAxis;
+      updateXScaleAndXAxis = _;
       return chart;
     };
     chart.xAxis = function(_) {
@@ -486,9 +476,32 @@
     path.attr("d", chart.stacked() ? area : line);
   }
 
+  /**
+   * x Scale/Axis in years.
+   */
+  var updateXScaleAndXAxis_years = function(chart, data) {
+    var data_flat = util.flatten(data);
+    var xExt      = d3.extent(data_flat, function(d) { return d[0]; }); // d3.extent gets max/min in array
+    var xDomain   = d3.range(xExt[0], xExt[1] + 1);
+    chart.xScale
+      .domain(xDomain)
+      .rangeRoundBands([0, chart.width()], 0.5);
+    if (xDomain.length > 10) {
+      // Restrict number of x-axis ticks, to ensure that year labels do not overlap.
+      // In general, we only have space for approximately 10 labels
+      var divisor  = Math.ceil(xDomain.length / 10);
+      var startIdx = xDomain[0] % 5 ? (5 - xDomain[0] % 5) : 0; // first index whose val is a multiple of 5
+      var subset   = xDomain.filter(function(d, i) { return (i - startIdx) % divisor == 0; });
+      chart.xAxis().tickValues(subset);
+      // Use less padding (otherwise bars will be too narrow)
+      chart.xScale.rangeRoundBands([0, chart.width()], 0.1);
+    }
+  };
+
   function registrationsChart() {
     return baseChart()
       .render_data(render_data_column)
+      .updateXScaleAndXAxis(updateXScaleAndXAxis_years)
       .stacked(true);
   }
 
