@@ -15,6 +15,7 @@
         colors       = [],
         hide         = {},
         transition   = false,
+        yHorizontal  = false,
         stacked      = false,
         stackOffset  = "zero",
         defCol       = d3.scale.linear().range(["#00f", "#f00"]),
@@ -58,11 +59,21 @@
           data = stack(data);
         }
 
+        // default scales
+        var xRange = yHorizontal ? [height, 0] : [0, width];
+        var yRange = yHorizontal ? [0, width]  : [height, 0];
+        xScale.rangeRoundBands(xRange, 0.5);
+        yScale.rangeRound(yRange);
+        
         // Update scales / axis.
         var xData = data.map(function(s) { return s.map(function(d) { return d[0]; }); });
         var yData = data.map(function(s) { return s.map(function(d) { return stacked ? d.y0 + d.y : d[1]; }); });
-        updateXScaleAndXAxis(xScale, xAxis, xData, width);
-        updateYScaleAndYAxis(yScale, yAxis, yData, height);
+        updateXScaleAndXAxis(xScale, xAxis, xData, yHorizontal ? height : width);
+        updateYScaleAndYAxis(yScale, yAxis, yData, yHorizontal ? width: height);
+        if (yHorizontal) {
+          xAxis.orient("left");
+          yAxis.orient("top");
+        }
 
         if (stacked) {
           // Now that axes and scales have been set (including min/max stack values),
@@ -201,6 +212,11 @@
       margin = _;
       return chart;
     };
+    chart.marginLeft = function(_) {
+      if (!arguments.length) return margin.left;
+      margin.left = _;
+      return chart;
+    };
     chart.width = function(_) {
       if (!arguments.length) return width;
       width = _;
@@ -244,6 +260,11 @@
     chart.transition = function(_) {
       if (!arguments.length) return transition;
       transition = _;
+      return chart;
+    };
+    chart.yHorizontal = function(_) {
+      if (!arguments.length) return yHorizontal;
+      yHorizontal = _;
       return chart;
     };
     chart.stacked = function(_) {
@@ -354,18 +375,31 @@
     var rectEnter = rect.enter().append("rect");
     if (chart.stacked()) {
       // stacked
-      rectEnter
-        .attr("x", function(d) { return chart.X(d); })
-        .attr("y", function(d) { return chart.Y0(d); })
-        .attr("width", chart.xScale.rangeBand())
-        .attr("height", 0);
+      if (chart.yHorizontal()) {
+        // TODO:
+        rectEnter
+          .attr("x", 0)
+          .attr("y", function(d) { return chart.X(d); })
+          .attr("width", 0)
+          .attr("height", chart.xScale.rangeBand());
+      } else {
+        rectEnter
+          .attr("x", function(d) { return chart.X(d); })
+          .attr("y", function(d) { return chart.Y0(d); })
+          .attr("width", chart.xScale.rangeBand())
+          .attr("height", 0);      
+      }
     } else {
       // grouped
-      rectEnter
-        .attr("x", function(d, i, j) { return chart.X(d) + chart.xScale.rangeBand() / data.length * j; })
-        .attr("y", function(d) { return chart.yScale(0); })
-        .attr("width", chart.xScale.rangeBand() / data.length)
-        .attr("height", 0);
+      if (chart.yHorizontal()) {
+        // TODO:
+      } else {
+        rectEnter
+          .attr("x", function(d, i, j) { return chart.X(d) + chart.xScale.rangeBand() / data.length * j; })
+          .attr("y", function(d) { return chart.yScale(0); })
+          .attr("width", chart.xScale.rangeBand() / data.length)
+          .attr("height", 0);      
+      }
     }
 
     if (chart.transition()) {
@@ -385,20 +419,32 @@
 
     if (chart.stacked()) {
       // stacked
-      rect
-        .attr("x", function(d) { return chart.X(d); })
-        .attr("y", function(d) { return chart.Y1(d); })
-        .attr("width", chart.xScale.rangeBand())
-        .attr("height", function(d) { return chart.yScale(d.y0) - chart.yScale(d.y0 + d.y); });
+      if (chart.yHorizontal()) {
+        rect
+          .attr("x", 0)
+          .attr("y", function(d) { return chart.X(d); })
+          .attr("width", function(d) { return - chart.yScale(d.y0) + chart.yScale(d.y0 + d.y); })
+          .attr("height", chart.xScale.rangeBand());
+      } else {
+        rect
+          .attr("x", function(d) { return chart.X(d); })
+          .attr("y", function(d) { return chart.Y1(d); })
+          .attr("width", chart.xScale.rangeBand())
+          .attr("height", function(d) { return chart.yScale(d.y0) - chart.yScale(d.y0 + d.y); });
+      }
     } else {
       // grouped
-      rect
-        .attr("x", function(d, i, j) { return chart.X(d) + chart.xScale.rangeBand() / data.length * j; })
-        .attr("y", function(d, i, j) { return chart.hide()[j] ? chart.yScale(0) : chart.Y(d); })
-        .attr("width", chart.xScale.rangeBand() / data.length)
-        .attr("height", function(d, i, j) { 
-          return chart.hide()[j] ? 0 : chart.height() - chart.Y(d);
-        });
+      if (chart.yHorizontal()) {
+        // TODO:
+      } else {
+        rect
+          .attr("x", function(d, i, j) { return chart.X(d) + chart.xScale.rangeBand() / data.length * j; })
+          .attr("y", function(d, i, j) { return chart.hide()[j] ? chart.yScale(0) : chart.Y(d); })
+          .attr("width", chart.xScale.rangeBand() / data.length)
+          .attr("height", function(d, i, j) { 
+            return chart.hide()[j] ? 0 : chart.height() - chart.Y(d);
+          });      
+      }
     }
   }
 
@@ -501,12 +547,13 @@
   /**
    * Scale/Axis ordinal year-range.
    */
-  var updateScaleAndAxis_ordinal_years = function(scale, axis, data, length) {
+  var updateScaleAndAxis_ordinal_years = function(scale, axis, data, length, reverse) {
     // Only use data from 1st series (assumes "stackability").
     var domain = data[0];
+    var range = reverse ? [length, 0] : [0, length];
     scale
       .domain(domain)
-      .rangeRoundBands([0, length], 0.5);
+      .rangeRoundBands(range, 0.5);
     if (domain.length > 10) {
       // Restrict number of ticks, to ensure that year labels do not overlap.
       // In general, we only have space for approximately 10 labels
@@ -515,7 +562,7 @@
       var subset   = domain.filter(function(d, i) { return (i - startIdx) % divisor == 0; });
       axis.tickValues(subset);
       // Use less padding (otherwise bars will be too narrow)
-      scale.rangeRoundBands([0, length], 0.1);
+      scale.rangeRoundBands(range, 0.1);
     }
   };
 
@@ -537,6 +584,8 @@
 
   function territoriesChart(){
     return baseChart()
+      .yHorizontal(true)
+      .marginLeft(60)
       .render_data(render_data_column)
       .updateXScaleAndXAxis(updateScaleAndAxis_ordinal)
       .updateYScaleAndYAxis(updateScaleAndAxis_linear)

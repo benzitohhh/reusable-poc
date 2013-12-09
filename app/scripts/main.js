@@ -130,7 +130,8 @@ function demo2() {
 }
 
 demo3();
-demo1();
+demoAll();
+//demo1();
 function demo3() {
   // territory charts (bar charts)
   // TODO: add to demoAll()
@@ -139,7 +140,7 @@ function demo3() {
     .call(chart.territoriesChart()
           // Single series, so no labels or colors needed
           .title("Bose Cluster #1: Rights per Territory-Group")
-          //.transition(true)
+          .transition(true)
          );
   
 }
