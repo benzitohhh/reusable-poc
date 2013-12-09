@@ -19,6 +19,7 @@
         stacked      = false,
         stackOffset  = "zero",
         defCol       = d3.scale.linear().range(["#00f", "#f00"]),
+                       //d3.scale.category10(),
         xValue       = function(d) { return d.x; }, // default x-accessor
         yValue       = function(d) { return d.y; }, // default y-accessor
         xScale       = d3.scale.ordinal().rangeRoundBands([0, width], 0.5),
@@ -72,7 +73,7 @@
         updateYScaleAndYAxis(yScale, yAxis, yData, yHorizontal ? width: height);
         if (yHorizontal) {
           xAxis.orient("left");
-          yAxis.orient("top");
+          yAxis.orient("top").tickSize(-height); // extend ticks out, so they become grid lines
         }
 
         if (stacked) {
@@ -215,6 +216,11 @@
     chart.marginLeft = function(_) {
       if (!arguments.length) return margin.left;
       margin.left = _;
+      return chart;
+    };
+    chart.marginTop = function(_) {
+      if (!arguments.length) return margin.top;
+      margin.top = _;
       return chart;
     };
     chart.width = function(_) {
@@ -374,15 +380,15 @@
     // If they don't exist yet, append them.
     var rectEnter = rect.enter().append("rect");
     if (chart.stacked()) {
-      // stacked
       if (chart.yHorizontal()) {
-        // TODO:
+        // stacked bar
         rectEnter
-          .attr("x", 0)
+          .attr("x", function(d) { return chart.yScale(d.y0); })
           .attr("y", function(d) { return chart.X(d); })
           .attr("width", 0)
           .attr("height", chart.xScale.rangeBand());
       } else {
+        // stacked column
         rectEnter
           .attr("x", function(d) { return chart.X(d); })
           .attr("y", function(d) { return chart.Y0(d); })
@@ -390,10 +396,15 @@
           .attr("height", 0);      
       }
     } else {
-      // grouped
       if (chart.yHorizontal()) {
-        // TODO:
+        // grouped bar
+        rectEnter
+          .attr("x", function(d, i, j) { return chart.yScale(0); })
+          .attr("y", function(d, i, j) { return chart.X(d) + chart.xScale.rangeBand() / data.length * j; })
+          .attr("width", 0)         
+          .attr("height", chart.xScale.rangeBand() / data.length);
       } else {
+        // grouped column
         rectEnter
           .attr("x", function(d, i, j) { return chart.X(d) + chart.xScale.rangeBand() / data.length * j; })
           .attr("y", function(d) { return chart.yScale(0); })
@@ -416,16 +427,17 @@
         rect = rect.transition().duration(500).delay(function(d, i, j) { return idxExclHidden[j] * 500; });
       }
     }
-
+    
     if (chart.stacked()) {
-      // stacked
       if (chart.yHorizontal()) {
+        // stacked bar
         rect
-          .attr("x", 0)
+          .attr("x", function(d) { return chart.yScale(d.y0); })
           .attr("y", function(d) { return chart.X(d); })
           .attr("width", function(d) { return - chart.yScale(d.y0) + chart.yScale(d.y0 + d.y); })
           .attr("height", chart.xScale.rangeBand());
       } else {
+        // stacked column
         rect
           .attr("x", function(d) { return chart.X(d); })
           .attr("y", function(d) { return chart.Y1(d); })
@@ -433,10 +445,17 @@
           .attr("height", function(d) { return chart.yScale(d.y0) - chart.yScale(d.y0 + d.y); });
       }
     } else {
-      // grouped
       if (chart.yHorizontal()) {
-        // TODO:
+        // grouped bar
+        rect
+          .attr("x", function(d, i, j) { return chart.yScale(0); })
+          .attr("y", function(d, i, j) { return chart.X(d) + chart.xScale.rangeBand() / data.length * j; })
+          .attr("width", function(d, i, j) { 
+            return chart.hide()[j] ? 0 : chart.Y(d);
+          })
+          .attr("height", chart.xScale.rangeBand() / data.length);
       } else {
+        // grouped column
         rect
           .attr("x", function(d, i, j) { return chart.X(d) + chart.xScale.rangeBand() / data.length * j; })
           .attr("y", function(d, i, j) { return chart.hide()[j] ? chart.yScale(0) : chart.Y(d); })
@@ -586,6 +605,7 @@
     return baseChart()
       .yHorizontal(true)
       .marginLeft(60)
+      .marginTop(80)
       .render_data(render_data_column)
       .updateXScaleAndXAxis(updateScaleAndAxis_ordinal)
       .updateYScaleAndYAxis(updateScaleAndAxis_linear)

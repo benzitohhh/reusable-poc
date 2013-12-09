@@ -129,9 +129,6 @@ function demo2() {
          );
 }
 
-demo3();
-demoAll();
-//demo1();
 function demo3() {
   // territory charts (bar charts)
   // TODO: add to demoAll()
@@ -142,8 +139,28 @@ function demo3() {
           .title("Bose Cluster #1: Rights per Territory-Group")
           .transition(true)
          );
-  
 }
+
+//demo3();
+demo4();
+//demoAll();
+//demo1();
+function demo4() {
+  // more territory charts (bar charts)
+  // TODO: add to demoAll()
+  d3.select("#tGroups-bose-byCluster")
+    .datum(tGroups_bose_byCluster) // bind data
+    .call(chart.territoriesChart()
+          // Single series, so no labels or colors needed
+          .title("Bose Cluster #1: Rights per Territory-Group")
+          .transition(true)
+          .labels(d3.keys(bosePfamsPerNamedCluster))
+          .colors(["blue", "red", "green", "purple"])
+         );
+
+
+}
+
 
 function demoAll() {
   d3.select("#reg-by-outcome")
