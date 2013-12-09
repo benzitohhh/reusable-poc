@@ -129,6 +129,9 @@ function demo2() {
          );
 }
 
+//demo3();
+//demo4(); 
+//demo5(); 
 function demo3() {
   // territory charts (bar charts)
   // TODO: add to demoAll()
@@ -141,26 +144,185 @@ function demo3() {
          );
 }
 
-//demo3();
-demo4();
-//demoAll();
-//demo1();
 function demo4() {
   // more territory charts (bar charts)
   // TODO: add to demoAll()
   d3.select("#tGroups-bose-byCluster")
     .datum(tGroups_bose_byCluster) // bind data
     .call(chart.territoriesChart()
-          // Single series, so no labels or colors needed
           .title("Bose Cluster #1: Rights per Territory-Group")
           .transition(true)
           .labels(d3.keys(bosePfamsPerNamedCluster))
           .colors(["blue", "red", "green", "purple"])
          );
-
-
 }
 
+function demo5() {
+  // and some more territory charts (bar charts)
+  // TODO: add to demoAll()
+  // ============ single series ==============
+
+  d3.select("#tGroups-boseClstr1")
+    .datum(tGroups_boseClstr1) // bind data
+    .call(chart.territoriesChart()
+          // Single series, so no labels or colors needed
+          .title("Bose Cluster #1: Rights per Territory-Group")
+          .transition(true)
+         );
+
+  d3.select("#terrs-boseClstr1-EU")
+    .datum(terrs_boseClstr1_EU) // bind data
+    .call(chart.territoriesChart()
+          // Single series, so no labels or colors needed
+          .title("Bose Cluster #1: Rights per Territory (within EUROPE)")
+          .transition(true)
+         );
+
+  d3.select("#terrs-boseClstr1-USA")
+    .datum(terrs_boseClstr1_USA) // bind data
+    .call(chart.territoriesChart()
+          // Single series, so no labels or colors needed
+          .title("Bose Cluster #1: Rights per Territory (within USA)")
+          .transition(true)
+         );
+
+  d3.select("#terrs-boseClstr1-APAC")
+    .datum(terrs_boseClstr1_APAC) // bind data
+    .call(chart.territoriesChart()
+          // Single series, so no labels or colors needed
+          .title("Bose Cluster #1: Rights per Territory (within APAC)")
+          .transition(true)
+         );
+
+  d3.select("#terrs-boseClstr1-OTHER")
+    .datum(terrs_boseClstr1_OTHER) // bind data
+    .call(chart.territoriesChart()
+          // Single series, so no labels or colors needed
+          .title("Bose Cluster #1: Rights per Territory (within OTHER)")
+          .transition(true)
+         );
+
+  d3.select("#terrs-boseClstr1-ALL")
+    .datum(terrs_boseClstr1_ALL) // bind data
+    .call(chart.territoriesChart()
+          // Single series, so no labels or colors needed
+          .title("Bose Cluster #1: Rights per Territory (within ALL)")
+          .transition(true)
+         );
+
+
+
+  // ======= multi series ========
+
+  d3.select("#tGroups-bose-byCluster")
+    .datum(tGroups_bose_byCluster) // bind data
+    .call(chart.territoriesChart()
+          .title("BY CLUSTER: Bose: Rights per Territory-Group")
+          .transition(true)
+          .labels(d3.keys(bosePfamsPerNamedCluster))
+          .colors(d3.scale.category10().range())
+         );
+
+  d3.select("#terrs-bose-EU-byCluster")
+    .datum(terrs_bose_EU_byCluster) // bind data
+    .call(chart.territoriesChart()
+          .title("BY CLUSTER: Bose: Rights per Territory (within EU)")
+          .transition(true)
+          .labels(d3.keys(bosePfamsPerNamedCluster))
+          .colors(d3.scale.category10().range())
+         );
+
+  d3.select("#terrs-bose-USA-byCluster")
+    .datum(terrs_bose_USA_byCluster) // bind data
+    .call(chart.territoriesChart()
+          .title("BY CLUSTER: Bose: Rights per Territory (within USA)")
+          .transition(true)
+          .labels(d3.keys(bosePfamsPerNamedCluster))
+          .colors(d3.scale.category10().range())
+         );
+
+  d3.select("#terrs-bose-APAC-byCluster")
+    .datum(terrs_bose_APAC_byCluster) // bind data
+    .call(chart.territoriesChart()
+          .title("BY CLUSTER: Bose: Rights per Territory (within APAC)")
+          .transition(true)
+          .labels(d3.keys(bosePfamsPerNamedCluster))
+          .colors(d3.scale.category10().range())
+         );
+
+  d3.select("#terrs-bose-OTHER-byCluster")
+    .datum(terrs_bose_OTHER_byCluster) // bind data
+    .call(chart.territoriesChart()
+          .title("BY CLUSTER: Bose: Rights per Territory (within OTHER)")
+          .transition(true)
+          .labels(d3.keys(bosePfamsPerNamedCluster))
+          .colors(d3.scale.category10().range())
+         );
+
+  d3.select("#terrs-bose-ALL-byCluster")
+    .datum(terrs_bose_ALL_byCluster) // bind data
+    .call(chart.territoriesChart()
+          .title("BY CLUSTER: Bose: Rights per Territory (within ALL)")
+          .transition(true)
+          .labels(d3.keys(bosePfamsPerNamedCluster))
+          .colors(d3.scale.category10().range())
+         );
+
+  d3.select("#tGroups-bose-byCompany")
+    .datum(tGroups_bose_byCompany) // bind data
+    .call(chart.territoriesChart()
+          .title("BY COMPANY: Bose: Rights per Territory-Group")
+          .transition(true)
+          .labels(d3.keys(bosePfamsPerNamedCluster))
+          .colors(d3.scale.category10().range())
+         );
+
+  d3.select("#terrs-bose-EU-byCompany")
+    .datum(terrs_bose_EU_byCompany) // bind data
+    .call(chart.territoriesChart()
+          .title("BY COMPANY: Bose: Rights per Territory (within EU)")
+          .transition(true)
+          .labels(d3.keys(bosePfamsPerNamedCluster))
+          .colors(d3.scale.category10().range())
+         );
+
+  d3.select("#terrs-bose-USA-byCompany")
+    .datum(terrs_bose_USA_byCompany) // bind data
+    .call(chart.territoriesChart()
+          .title("BY COMPANY: Bose: Rights per Territory (within USA)")
+          .transition(true)
+          .labels(d3.keys(bosePfamsPerNamedCluster))
+          .colors(d3.scale.category10().range())
+         );
+
+  d3.select("#terrs-bose-APAC-byCompany")
+    .datum(terrs_bose_APAC_byCompany) // bind data
+    .call(chart.territoriesChart()
+          .title("BY COMPANY: Bose: Rights per Territory (within APAC)")
+          .transition(true)
+          .labels(d3.keys(bosePfamsPerNamedCluster))
+          .colors(d3.scale.category10().range())
+         );
+
+  d3.select("#terrs-bose-OTHER-byCompany")
+    .datum(terrs_bose_OTHER_byCompany) // bind data
+    .call(chart.territoriesChart()
+          .title("BY COMPANY: Bose: Rights per Territory (within OTHER)")
+          .transition(true)
+          .labels(d3.keys(bosePfamsPerNamedCluster))
+          .colors(d3.scale.category10().range())
+         );
+
+  d3.select("#terrs-bose-ALL-byCompany")
+    .datum(terrs_bose_ALL_byCompany) // bind data
+    .call(chart.territoriesChart()
+          .title("BY COMPANY: Bose: Rights per Territory (within ALL)")
+          .transition(true)
+          .labels(d3.keys(bosePfamsPerNamedCluster))
+          .colors(d3.scale.category10().range())
+         );
+
+}
 
 function demoAll() {
   d3.select("#reg-by-outcome")
