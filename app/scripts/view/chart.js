@@ -10,13 +10,13 @@
     var margin       = {top: 40, right: 150, bottom: 30, left: 40},
         width        = 600 - margin.left - margin.right,
         height       = 400 - margin.top - margin.bottom,
-        labels       = [],
         title        = "",
-        hide         = {/*0: true, 1: true, 2: true*/},
+        labels       = [],
+        colors       = [],
+        hide         = {},
         transition   = false,
         stacked      = false,
         stackOffset  = "zero",
-        colors       = [],
         defCol       = d3.scale.linear().range(["#00f", "#f00"]),
         xValue       = function(d) { return d.x; }, // default x-accessor
         yValue       = function(d) { return d.y; }, // default y-accessor
@@ -38,8 +38,8 @@
           .x(function(d) { return d[0]; })
           .y(function(d) { return d[1]; }),
         render_data  = function(layer, chart, data) {},
-        updateXScaleAndXAxis = function(chart, data) {},
-        updateYScaleAndYAxis = function(chart, data) {};
+        updateXScaleAndXAxis = function(scale, axis, data, length) {},
+        updateYScaleAndYAxis = function(scale, axis, data, length) {};
 
     function chart(selection) {
       selection.each(function(data) {
@@ -53,19 +53,20 @@
         });
 
         if (stacked) {
+          // Stack all series (including hidden ones)
           stack.offset(stackOffset);
-          data = stack(data); // Add y0 (baseline)
+          data = stack(data);
         }
 
-        // Update the x-scale (and set attributes on the x-axis).
-        updateXScaleAndXAxis(chart, data);
-
-        // Update the y-scale (and set attributes on the y-axis).
-        updateYScaleAndYAxis(chart, data);
+        // Update scales / axis.
+        var xData = data.map(function(s) { return s.map(function(d) { return d[0]; }); });
+        var yData = data.map(function(s) { return s.map(function(d) { return stacked ? d.y0 + d.y : d[1]; }); });
+        updateXScaleAndXAxis(xScale, xAxis, xData, width);
+        updateYScaleAndYAxis(yScale, yAxis, yData, height);
 
         if (stacked) {
           // Now that axes and scales have been set (including min/max stack values),
-          // recalculate stack excluding hidden series
+          // re-stack excluding hidden series
           var sData = data.map(function(s, i) {
             return !hide[i] ? s : s.map(function(d) { return [d[0], 0]; });  // hidden series get y = 0
           });
@@ -476,70 +477,69 @@
   }
 
   /**
-   * x Scale/Axis in years.
+   * Scale/Axis linear (integers).
    */
-  var updateXScaleAndXAxis_years = function(chart, data) {
+  var updateScaleAndAxis_linear = function(scale, axis, data, length) {
+    // get max (using values from ALL series)
     var data_flat = util.flatten(data);
-    var xExt      = d3.extent(data_flat, function(d) { return d[0]; }); // d3.extent gets max/min in array
-    var xDomain   = d3.range(xExt[0], xExt[1] + 1);
-    chart.xScale
-      .domain(xDomain)
-      .rangeRoundBands([0, chart.width()], 0.5);
-    if (xDomain.length > 10) {
-      // Restrict number of x-axis ticks, to ensure that year labels do not overlap.
+    var maxVal = d3.max(data_flat); 
+    scale
+      .domain([0, maxVal]);
+      //.rangeRound([chart.height(), 0]); // TODO: is this necessary? If not, remove!
+    var ticks = scale.ticks().filter(function(d, i) { return d % 1 === 0; }); // remove non-integers
+    axis.tickValues(ticks);
+  };
+
+  /**
+   * Scale/Axis ordinal.
+   */
+  var updateScaleAndAxis_ordinal = function(scale, axis, data, length) {
+    // Only use data from 1st series (assumes "stackability").
+    scale.domain(data[0]);
+  };
+
+  /**
+   * Scale/Axis ordinal year-range.
+   */
+  var updateScaleAndAxis_ordinal_years = function(scale, axis, data, length) {
+    // Only use data from 1st series (assumes "stackability").
+    var domain = data[0];
+    scale
+      .domain(domain)
+      .rangeRoundBands([0, length], 0.5);
+    if (domain.length > 10) {
+      // Restrict number of ticks, to ensure that year labels do not overlap.
       // In general, we only have space for approximately 10 labels
-      var divisor  = Math.ceil(xDomain.length / 10);
-      var startIdx = xDomain[0] % 5 ? (5 - xDomain[0] % 5) : 0; // first index whose val is a multiple of 5
-      var subset   = xDomain.filter(function(d, i) { return (i - startIdx) % divisor == 0; });
-      chart.xAxis().tickValues(subset);
+      var divisor  = Math.ceil(domain.length / 10);
+      var startIdx = domain[0] % 5 ? (5 - domain[0] % 5) : 0; // first index whose val is a multiple of 5
+      var subset   = domain.filter(function(d, i) { return (i - startIdx) % divisor == 0; });
+      axis.tickValues(subset);
       // Use less padding (otherwise bars will be too narrow)
-      chart.xScale.rangeRoundBands([0, chart.width()], 0.1);
+      scale.rangeRoundBands([0, length], 0.1);
     }
-  };
-
-  /**
-   * x Scale/Axis for ordinals.
-   */
-  var updateXScaleAndXAxis_ordinals = function(chart, data) {
-    var xDomain = data[0].map(function(d) { return d[0]; });
-    chart.xScale
-      .domain(xDomain);
-  };
-
-  /**
-   * Y Scale/Axis for numeric values, vertical.
-   */
-  var updateYScaleAndYAxis_vals_vertical = function(chart, data) {
-    var data_flat = util.flatten(data);
-    var maxY = d3.max(data_flat, function(d) { return chart.stacked() ? d.y0 + d.y : d[1]; }); 
-    chart.yScale
-      .domain([0, maxY])
-      .rangeRound([chart.height(), 0]);
-    var yTicks = chart.yScale.ticks().filter(function(d, i) { return d % 1 === 0; }); // remove non-integers
-    chart.yAxis().tickValues(yTicks);
   };
 
   function registrationsChart() {
     return baseChart()
       .render_data(render_data_column)
-      .updateXScaleAndXAxis(updateXScaleAndXAxis_years)
-      .updateYScaleAndYAxis(updateYScaleAndYAxis_vals_vertical)
+      .updateXScaleAndXAxis(updateScaleAndAxis_ordinal_years)
+      .updateYScaleAndYAxis(updateScaleAndAxis_linear)
       .stacked(true);
   }
 
   function portfolioChart(){
     return baseChart()
       .render_data(render_data_line)
-      .updateXScaleAndXAxis(updateXScaleAndXAxis_years)
-      .updateYScaleAndYAxis(updateYScaleAndYAxis_vals_vertical)
+      .updateXScaleAndXAxis(updateScaleAndAxis_ordinal_years)
+      .updateYScaleAndYAxis(updateScaleAndAxis_linear)
       .stacked(true);  
   }
 
   function territoriesChart(){
     return baseChart()
       .render_data(render_data_column)
-      .updateXScaleAndXAxis(updateXScaleAndXAxis_ordinals)
-      .updateYScaleAndYAxis(updateYScaleAndYAxis_vals_vertical)
+      .updateXScaleAndXAxis(updateScaleAndAxis_ordinal)
+      .updateYScaleAndYAxis(updateScaleAndAxis_linear)
       .stacked(true);  
   }
 

@@ -96,7 +96,6 @@ var terrs_bose_ALL_byCompany   = series.rightsPerTerritoryPerKey(terrToTGroup, p
 
 
 //=========== DEMOS ===========
-//demo1()
 function demo1() {
   // 1. COLUMN CHART: STACKED
   // 2. Show with fake data.
@@ -131,6 +130,7 @@ function demo2() {
 }
 
 demo3();
+demo1();
 function demo3() {
   // territory charts (bar charts)
   // TODO: add to demoAll()
